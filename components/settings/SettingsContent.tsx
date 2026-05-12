@@ -168,7 +168,7 @@ export function SettingsContent({ email }: { email: string }) {
           title="About"
           action={<Info size={16} className="text-muted-foreground" />}
         >
-          <SettingRow label="Version" description="GymOS Stage 2">
+          <SettingRow label="Version" description="Myostat Stage 2">
             <span className="text-xs text-muted-foreground">2.0.0</span>
           </SettingRow>
           <SettingRow label="Account" description={email}>

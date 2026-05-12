@@ -21,5 +21,5 @@ export const SETTINGS_NAV = {
   icon: Settings,
 } as const;
 
-export const APP_NAME = "GymOS";
+export const APP_NAME = "Myostat";
 export const APP_VERSION = "1.0.0";

@@ -16,13 +16,13 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: { default: "GymOS", template: "%s | GymOS" },
+  title: { default: "Myostat", template: "%s | Myostat" },
   description: "Your premium fitness operating system",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "GymOS",
+    title: "Myostat",
   },
   formatDetection: { telephone: false },
 };

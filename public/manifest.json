@@ -1,6 +1,6 @@
 {
-  "name": "Gym Dashboard",
-  "short_name": "GymOS",
+  "name": "Myostat",
+  "short_name": "Myostat",
   "description": "Your premium fitness operating system",
   "display": "standalone",
   "orientation": "portrait",

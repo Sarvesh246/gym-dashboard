@@ -912,7 +912,7 @@ export function OnboardingWizard({ initialStep, initialData }: Props) {
           <div className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center">
             <Activity size={14} className="text-primary-foreground" strokeWidth={2.5} />
           </div>
-          <span className="text-sm font-semibold text-foreground">GymOS</span>
+          <span className="text-sm font-semibold text-foreground">Myostat</span>
         </div>
         <span className="text-xs text-muted-foreground">
           {step + 1} of {TOTAL_STEPS}

@@ -39,7 +39,7 @@ export default function SignupPage() {
           <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center shrink-0">
             <Activity size={18} className="text-primary-foreground" strokeWidth={2.5} />
           </div>
-          <span className="text-lg font-bold text-foreground tracking-tight">GymOS</span>
+          <span className="text-lg font-bold text-foreground tracking-tight">Myostat</span>
         </div>
 
         {/* Header */}
