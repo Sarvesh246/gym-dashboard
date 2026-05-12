@@ -166,7 +166,7 @@ export function WorkoutSession({ workout, isNew, readinessScore }: Props) {
       );
       const ex = exercises[exIdx];
       persistSet(ex.exercise_id, setIdx + 1, {
-        reps: null, weight: null, rpe: null, completed: true, failed: true,
+        set_number: setIdx + 1, reps: null, weight: null, rpe: null, completed: true, failed: true,
       });
 
       const totalSets = exercises[exIdx].target_sets;

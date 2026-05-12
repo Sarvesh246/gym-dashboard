@@ -64,7 +64,7 @@ export async function searchExercises(query: string): Promise<ExerciseLibrary[]>
     if (wgerResults && wgerResults.length > 0) {
       const wgerExercises = (wgerResults as any[]).map(wgerToExerciseLibrary);
       // Avoid duplicates by name
-      const staticNames = new Set(results.map((e) => e.name));
+      const staticNames = new Set(results.map((e: ExerciseLibrary) => e.name));
       results = [...results, ...wgerExercises.filter((e) => !staticNames.has(e.name))];
     }
   } catch {
