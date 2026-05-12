@@ -19,6 +19,13 @@ export const metadata: Metadata = {
   title: { default: "Myostat", template: "%s | Myostat" },
   description: "Your premium fitness operating system",
   manifest: "/manifest.json",
+  icons: {
+    icon: [
+      { rel: "icon", url: "/logo.svg", type: "image/svg+xml" },
+      { rel: "shortcut icon", url: "/favicon.ico" },
+    ],
+    apple: [{ rel: "apple-touch-icon", url: "/icons/icon.svg" }],
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",

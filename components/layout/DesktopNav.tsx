@@ -3,10 +3,11 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
+import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { NAV_ITEMS, SETTINGS_NAV, APP_NAME } from "@/lib/constants";
 import { ThemeToggle } from "@/components/utility/ThemeToggle";
-import { Settings, Activity } from "lucide-react";
+import { Settings } from "lucide-react";
 
 export function DesktopNav() {
   const pathname = usePathname();
@@ -14,12 +15,22 @@ export function DesktopNav() {
   return (
     <aside className="fixed left-0 top-0 bottom-0 z-40 hidden md:flex w-60 flex-col border-r border-border bg-card">
       {/* Logo */}
-      <div className="flex items-center gap-2.5 px-5 py-5 border-b border-border">
-        <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary">
-          <Activity size={16} className="text-primary-foreground" strokeWidth={2.5} />
+      <Link
+        href="/"
+        className="flex items-center gap-3 px-5 py-5 border-b border-border hover:bg-muted/50 transition-colors"
+      >
+        <div className="flex h-8 w-8 items-center justify-center rounded-lg overflow-hidden shrink-0">
+          <Image
+            src="/logo.svg"
+            alt={APP_NAME}
+            width={32}
+            height={32}
+            priority
+            className="w-full h-full object-contain"
+          />
         </div>
         <span className="text-sm font-semibold text-foreground tracking-tight">{APP_NAME}</span>
-      </div>
+      </Link>
 
       {/* Nav Items */}
       <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-0.5">
