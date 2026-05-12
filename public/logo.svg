@@ -1,0 +1,118 @@
+<svg viewBox="0 0 500 500" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Dark gradient background -->
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#0f0f1f;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#050508;stop-opacity:1" />
+    </linearGradient>
+
+    <!-- Metallic bar gradient -->
+    <linearGradient id="barGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#e6e6f0;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#b3b3bf;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#e6e6f0;stop-opacity:1" />
+    </linearGradient>
+
+    <!-- Weight plate gradient -->
+    <linearGradient id="plateGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#404558;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#262838;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#404558;stop-opacity:1" />
+    </linearGradient>
+
+    <!-- Collar gradient -->
+    <radialGradient id="collarGradient" cx="50%" cy="40%">
+      <stop offset="0%" style="stop-color:#ffffff;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#d9d9e6;stop-opacity:1" />
+    </radialGradient>
+
+    <!-- Drop shadow filters -->
+    <filter id="barShadow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="4"/>
+      <feOffset dx="0" dy="3" result="offsetblur"/>
+      <feComponentTransfer>
+        <feFuncA type="linear" slope="0.4"/>
+      </feComponentTransfer>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <filter id="plateShadow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="6"/>
+      <feOffset dx="1" dy="5" result="offsetblur"/>
+      <feComponentTransfer>
+        <feFuncA type="linear" slope="0.5"/>
+      </feComponentTransfer>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <filter id="collarShadow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="3"/>
+      <feOffset dx="0" dy="2" result="offsetblur"/>
+      <feComponentTransfer>
+        <feFuncA type="linear" slope="0.3"/>
+      </feComponentTransfer>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="500" height="500" fill="url(#bgGradient)"/>
+
+  <!-- Left weight plate -->
+  <g filter="url(#plateShadow)">
+    <rect x="60" y="190" width="80" height="120" rx="8" ry="8" fill="url(#plateGradient)" stroke="#5a5d73" stroke-width="2"/>
+    <!-- Plate shine/highlight -->
+    <line x1="65" y1="210" x2="135" y2="210" stroke="#ffffff" stroke-width="2" opacity="0.15"/>
+  </g>
+
+  <!-- Right weight plate -->
+  <g filter="url(#plateShadow)">
+    <rect x="360" y="190" width="80" height="120" rx="8" ry="8" fill="url(#plateGradient)" stroke="#5a5d73" stroke-width="2"/>
+    <!-- Plate shine/highlight -->
+    <line x1="365" y1="210" x2="435" y2="210" stroke="#ffffff" stroke-width="2" opacity="0.15"/>
+  </g>
+
+  <!-- Left collar (sleeve) -->
+  <g filter="url(#collarShadow)">
+    <circle cx="150" cy="250" r="14" fill="url(#collarGradient)"/>
+    <!-- Inner ring detail -->
+    <circle cx="150" cy="250" r="12" fill="none" stroke="#f0f0f5" stroke-width="1" opacity="0.6"/>
+  </g>
+
+  <!-- Right collar (sleeve) -->
+  <g filter="url(#collarShadow)">
+    <circle cx="350" cy="250" r="14" fill="url(#collarGradient)"/>
+    <!-- Inner ring detail -->
+    <circle cx="350" cy="250" r="12" fill="none" stroke="#f0f0f5" stroke-width="1" opacity="0.6"/>
+  </g>
+
+  <!-- Main barbell bar (horizontal rod) -->
+  <g filter="url(#barShadow)">
+    <!-- Main bar shape with slight curve for dimension -->
+    <rect x="100" y="242" width="300" height="16" rx="8" ry="8" fill="url(#barGradient)"/>
+
+    <!-- Top highlight for metallic effect -->
+    <rect x="100" y="242" width="300" height="6" rx="3" ry="3" fill="#ffffff" opacity="0.25"/>
+
+    <!-- Subtle lines for texture -->
+    <line x1="120" y1="250" x2="380" y2="250" stroke="#ffffff" stroke-width="0.5" opacity="0.1"/>
+  </g>
+
+  <!-- Top rim of left collar for depth -->
+  <ellipse cx="150" cy="240" rx="14" ry="4" fill="none" stroke="#ffffff" stroke-width="1" opacity="0.2"/>
+
+  <!-- Top rim of right collar for depth -->
+  <ellipse cx="350" cy="240" rx="14" ry="4" fill="none" stroke="#ffffff" stroke-width="1" opacity="0.2"/>
+
+  <!-- Additional accent highlight on bar for polish -->
+  <rect x="150" y="247" width="200" height="2" fill="#ffffff" opacity="0.15" rx="1"/>
+</svg>
