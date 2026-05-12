@@ -91,7 +91,7 @@ export default async function WorkoutsPage() {
             value={readinessScore}
             unit="%"
             icon="TrendingUp"
-            color={readinessScore >= 70 ? "success" : readinessScore >= 45 ? "warning" : "error"}
+            color={readinessScore >= 70 ? "success" : readinessScore >= 45 ? "warning" : "danger"}
             animateValue
           />
         </div>
