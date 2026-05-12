@@ -1,0 +1,25 @@
+import {
+  LayoutDashboard,
+  Dumbbell,
+  Apple,
+  Moon,
+  User,
+  Settings,
+} from "lucide-react";
+
+export const NAV_ITEMS = [
+  { label: "Dashboard", href: "/", icon: LayoutDashboard },
+  { label: "Workouts", href: "/workouts", icon: Dumbbell },
+  { label: "Nutrition", href: "/nutrition", icon: Apple },
+  { label: "Recovery", href: "/recovery", icon: Moon },
+  { label: "Profile", href: "/profile", icon: User },
+] as const;
+
+export const SETTINGS_NAV = {
+  label: "Settings",
+  href: "/settings",
+  icon: Settings,
+} as const;
+
+export const APP_NAME = "GymOS";
+export const APP_VERSION = "1.0.0";

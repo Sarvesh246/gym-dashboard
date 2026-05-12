@@ -1,0 +1,19 @@
+{
+  "name": "Gym Dashboard",
+  "short_name": "GymOS",
+  "description": "Your premium fitness operating system",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#050505",
+  "theme_color": "#3B82F6",
+  "start_url": "/",
+  "scope": "/",
+  "icons": [
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
