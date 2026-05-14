@@ -63,10 +63,10 @@ export default function BarcodeScanner({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl w-full max-w-sm overflow-hidden">
+    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+      <div className="bg-card rounded-2xl w-full max-w-sm overflow-hidden">
         {/* Header */}
-        <div className="bg-gradient-to-r from-emerald-600 to-teal-600 px-4 py-4 flex items-center justify-between text-white">
+        <div className="bg-gradient-to-r from-success to-success/70 px-4 py-4 flex items-center justify-between text-white">
           <h2 className="font-semibold">Scan Barcode</h2>
           <button onClick={onClose} className="text-lg font-bold">
             ✕
@@ -92,14 +92,14 @@ export default function BarcodeScanner({
           )}
 
           {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-700">
+            <div className="bg-destructive/10 border border-destructive/30 rounded-lg p-3 text-sm text-destructive">
               {error}
             </div>
           )}
 
           {/* Manual entry */}
           <div className="space-y-2">
-            <label className="block text-sm font-medium text-gray-900">
+            <label className="block text-sm font-medium text-foreground">
               {isScanning ? "Or enter manually:" : "Enter barcode:"}
             </label>
             <div className="flex gap-2">
@@ -109,13 +109,13 @@ export default function BarcodeScanner({
                 onChange={(e) => setManualBarcode(e.target.value)}
                 onKeyPress={(e) => e.key === "Enter" && handleManualSubmit()}
                 placeholder="Scan or type barcode..."
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm"
+                className="flex-1 px-3 py-2 border border-input bg-background text-foreground placeholder:text-muted-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-ring text-sm"
                 autoFocus
               />
               <button
                 onClick={handleManualSubmit}
                 disabled={!manualBarcode.trim()}
-                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-400 text-white font-medium rounded-lg transition-colors"
+                className="px-4 py-2 bg-success hover:bg-success/90 disabled:opacity-50 text-white font-medium rounded-lg transition-colors"
               >
                 Search
               </button>
@@ -125,7 +125,7 @@ export default function BarcodeScanner({
           {isScanning && (
             <button
               onClick={() => setIsScanning(false)}
-              className="w-full py-2 text-emerald-600 hover:text-emerald-700 font-medium text-sm"
+              className="w-full py-2 text-success hover:text-success/80 font-medium text-sm"
             >
               Close Camera
             </button>

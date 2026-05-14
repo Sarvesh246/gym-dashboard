@@ -35,7 +35,7 @@ export default function MacroRings({ summary, goals, size = "lg" }: MacroRingsPr
         ].map((item, idx) => (
           <div key={idx} className="relative w-12 h-12">
             <svg className="w-full h-full -rotate-90" viewBox="0 0 50 50">
-              <circle cx="25" cy="25" r={radius} fill="none" stroke="#e5e7eb" strokeWidth={strokeWidth} />
+              <circle cx="25" cy="25" r={radius} fill="none" stroke="var(--color-border)" strokeWidth={strokeWidth} />
               <circle
                 cx="25"
                 cy="25"
@@ -62,7 +62,7 @@ export default function MacroRings({ summary, goals, size = "lg" }: MacroRingsPr
       <div className="relative w-24 h-24">
         <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
           {/* Background circles */}
-          <circle cx="50" cy="50" r={radius} fill="none" stroke="#f3f4f6" strokeWidth={strokeWidth * 1.5} />
+          <circle cx="50" cy="50" r={radius} fill="none" stroke="var(--color-border)" strokeWidth={strokeWidth * 1.5} />
 
           {/* Protein (top) */}
           <circle
@@ -121,8 +121,8 @@ export default function MacroRings({ summary, goals, size = "lg" }: MacroRingsPr
 
         {/* Center text */}
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <div className="text-sm font-bold text-gray-900">{Math.round(summary.calories)}</div>
-          <div className="text-xs text-gray-600">kcal</div>
+          <div className="text-sm font-bold text-foreground">{Math.round(summary.calories)}</div>
+          <div className="text-xs text-muted-foreground">kcal</div>
         </div>
       </div>
     </div>

@@ -37,17 +37,17 @@ export default function ServingSizeAdjuster({ food, onUpdate }: ServingSizeAdjus
 
   return (
     <div className="space-y-4">
-      <h3 className="font-semibold text-sm text-gray-900">Adjust Serving Size</h3>
+      <h3 className="font-semibold text-sm text-foreground">Adjust Serving Size</h3>
 
       {/* Servings slider/input */}
       <div>
-        <label className="block text-xs font-medium text-gray-700 mb-2">
+        <label className="block text-xs font-medium text-muted-foreground mb-2">
           Servings
         </label>
         <div className="flex items-center gap-2">
           <button
             onClick={() => setServings(Math.max(0.5, servings - 0.5))}
-            className="px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded text-sm font-medium"
+            className="px-3 py-2 bg-muted hover:bg-accent text-foreground rounded text-sm font-medium"
           >
             −
           </button>
@@ -55,14 +55,14 @@ export default function ServingSizeAdjuster({ food, onUpdate }: ServingSizeAdjus
             type="number"
             value={servings}
             onChange={(e) => setServings(Math.max(0.5, parseFloat(e.target.value) || 1))}
-            className="flex-1 px-3 py-2 border border-gray-300 rounded text-sm text-center focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            className="flex-1 px-3 py-2 border border-input bg-background text-foreground rounded text-sm text-center focus:outline-none focus:ring-2 focus:ring-ring"
             step="0.5"
             min="0.5"
             max="10"
           />
           <button
             onClick={() => setServings(servings + 0.5)}
-            className="px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded text-sm font-medium"
+            className="px-3 py-2 bg-muted hover:bg-accent text-foreground rounded text-sm font-medium"
           >
             +
           </button>
@@ -72,26 +72,26 @@ export default function ServingSizeAdjuster({ food, onUpdate }: ServingSizeAdjus
       {/* Custom size */}
       <div className="grid grid-cols-2 gap-2">
         <div>
-          <label className="block text-xs font-medium text-gray-700 mb-2">
+          <label className="block text-xs font-medium text-muted-foreground mb-2">
             Size
           </label>
           <input
             type="number"
             value={customSize}
             onChange={(e) => setCustomSize(parseFloat(e.target.value) || 100)}
-            className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            className="w-full px-3 py-2 border border-input bg-background text-foreground rounded text-sm focus:outline-none focus:ring-2 focus:ring-ring"
             step="0.5"
             min="0.5"
           />
         </div>
         <div>
-          <label className="block text-xs font-medium text-gray-700 mb-2">
+          <label className="block text-xs font-medium text-muted-foreground mb-2">
             Unit
           </label>
           <select
             value={unit}
             onChange={(e) => setUnit(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white"
+            className="w-full px-3 py-2 border border-input bg-background text-foreground rounded text-sm focus:outline-none focus:ring-2 focus:ring-ring"
           >
             {units.map((u) => (
               <option key={u.value} value={u.value}>
@@ -103,24 +103,24 @@ export default function ServingSizeAdjuster({ food, onUpdate }: ServingSizeAdjus
       </div>
 
       {/* Preview */}
-      <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3 space-y-2">
-        <h4 className="text-xs font-semibold text-emerald-900">Preview</h4>
+      <div className="bg-success/10 border border-success/20 rounded-xl p-3 space-y-2">
+        <h4 className="text-xs font-semibold text-foreground">Preview</h4>
         <div className="grid grid-cols-4 gap-2 text-xs">
           <div>
-            <div className="font-bold text-gray-900">{Math.round(food.calories_per_serving * multiplier)}</div>
-            <div className="text-gray-600">kcal</div>
+            <div className="font-bold text-foreground">{Math.round(food.calories_per_serving * multiplier)}</div>
+            <div className="text-muted-foreground">kcal</div>
           </div>
           <div>
-            <div className="font-bold text-amber-700">{Math.round(food.protein_g * multiplier)}g</div>
-            <div className="text-gray-600">protein</div>
+            <div className="font-bold text-amber-600">{Math.round(food.protein_g * multiplier)}g</div>
+            <div className="text-muted-foreground">protein</div>
           </div>
           <div>
-            <div className="font-bold text-blue-700">{Math.round(food.carbs_g * multiplier)}g</div>
-            <div className="text-gray-600">carbs</div>
+            <div className="font-bold text-primary">{Math.round(food.carbs_g * multiplier)}g</div>
+            <div className="text-muted-foreground">carbs</div>
           </div>
           <div>
-            <div className="font-bold text-orange-700">{Math.round(food.fat_g * multiplier)}g</div>
-            <div className="text-gray-600">fat</div>
+            <div className="font-bold text-orange-500">{Math.round(food.fat_g * multiplier)}g</div>
+            <div className="text-muted-foreground">fat</div>
           </div>
         </div>
       </div>

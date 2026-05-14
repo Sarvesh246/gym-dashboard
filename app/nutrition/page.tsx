@@ -74,13 +74,13 @@ export default function NutritionPage() {
   const isToday = selectedDate === today;
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="bg-white border-b border-gray-200 sticky top-0 z-40">
+    <div className="min-h-screen bg-background">
+      <div className="bg-card border-b border-border sticky top-0 z-40">
         <div className="max-w-2xl mx-auto px-4 py-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Nutrition</h1>
-              <p className="text-sm text-gray-600 mt-1">
+              <h1 className="text-2xl font-bold text-foreground">Nutrition</h1>
+              <p className="text-sm text-muted-foreground mt-1">
                 {new Date(selectedDate).toLocaleDateString("en-US", {
                   weekday: "long",
                   month: "short",
@@ -92,8 +92,8 @@ export default function NutritionPage() {
               onClick={() => setSelectedDate(today)}
               className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
                 isToday
-                  ? "bg-emerald-600 text-white"
-                  : "bg-gray-200 text-gray-900 hover:bg-gray-300"
+                  ? "bg-success text-white"
+                  : "bg-muted text-foreground hover:bg-accent"
               }`}
             >
               Today
@@ -105,40 +105,40 @@ export default function NutritionPage() {
       <div className="max-w-2xl mx-auto px-4 py-6 sm:px-6 lg:px-8 space-y-6">
         {isLoading ? (
           <div className="flex items-center justify-center py-12">
-            <div className="animate-spin w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full" />
+            <div className="animate-spin w-8 h-8 border-4 border-success border-t-transparent rounded-full" />
           </div>
         ) : summary && goals ? (
           <>
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Progress</h2>
+            <div className="bg-card rounded-xl border border-border p-6">
+              <h2 className="text-lg font-semibold text-foreground mb-4">Progress</h2>
               <div className="flex justify-center">
                 <MacroRings summary={summary} goals={goals} size="lg" />
               </div>
 
-              <div className="grid grid-cols-4 gap-3 mt-6 pt-6 border-t border-gray-200">
+              <div className="grid grid-cols-4 gap-3 mt-6 pt-6 border-t border-border">
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-gray-900">
+                  <div className="text-2xl font-bold text-foreground">
                     {Math.round(summary.calories)}
                   </div>
-                  <div className="text-xs text-gray-600 mt-1">of {goals.calorie_target} kcal</div>
+                  <div className="text-xs text-muted-foreground mt-1">of {goals.calorie_target} kcal</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-amber-700">
+                  <div className="text-2xl font-bold text-amber-600">
                     {Math.round(summary.protein_g)}g
                   </div>
-                  <div className="text-xs text-gray-600 mt-1">of {Math.round(goals.protein_target)}g</div>
+                  <div className="text-xs text-muted-foreground mt-1">of {Math.round(goals.protein_target)}g</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-blue-700">
+                  <div className="text-2xl font-bold text-primary">
                     {Math.round(summary.carbs_g)}g
                   </div>
-                  <div className="text-xs text-gray-600 mt-1">of {Math.round(goals.carb_target)}g</div>
+                  <div className="text-xs text-muted-foreground mt-1">of {Math.round(goals.carb_target)}g</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-orange-700">
+                  <div className="text-2xl font-bold text-orange-500">
                     {Math.round(summary.fat_g)}g
                   </div>
-                  <div className="text-xs text-gray-600 mt-1">of {Math.round(goals.fat_target)}g</div>
+                  <div className="text-xs text-muted-foreground mt-1">of {Math.round(goals.fat_target)}g</div>
                 </div>
               </div>
             </div>
@@ -146,29 +146,29 @@ export default function NutritionPage() {
             <div className="flex gap-3">
               <button
                 onClick={() => setLoggerOpen(true)}
-                className="flex-1 px-4 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-lg transition-colors"
+                className="flex-1 px-4 py-3 bg-success hover:bg-success/90 text-white font-medium rounded-xl transition-colors"
               >
                 + Log Food
               </button>
               <button
                 onClick={() => setScannerOpen(true)}
-                className="flex-1 px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors"
+                className="flex-1 px-4 py-3 bg-primary hover:bg-primary/90 text-white font-medium rounded-xl transition-colors"
               >
                 📷 Scan
               </button>
             </div>
 
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Meals</h2>
+            <div className="bg-card rounded-xl border border-border p-6">
+              <h2 className="text-lg font-semibold text-foreground mb-4">Meals</h2>
               <MealTimeline logs={logs} onDeleteLog={handleDeleteLog} />
             </div>
           </>
         ) : (
-          <div className="bg-white rounded-lg border border-gray-200 p-8 text-center">
-            <p className="text-gray-600 mb-4">Set up your nutrition goals to get started</p>
+          <div className="bg-card rounded-xl border border-border p-8 text-center">
+            <p className="text-muted-foreground mb-4">Set up your nutrition goals to get started</p>
             <a
               href="/nutrition/setup"
-              className="inline-block px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-lg transition-colors"
+              className="inline-block px-4 py-2 bg-success hover:bg-success/90 text-white font-medium rounded-xl transition-colors"
             >
               Set Goals
             </a>

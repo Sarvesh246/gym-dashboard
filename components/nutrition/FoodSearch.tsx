@@ -55,12 +55,12 @@ export default function FoodSearch({ onSelectFood, isLoading }: FoodSearchProps)
           placeholder="Search foods..."
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm"
+          className="w-full px-4 py-3 rounded-xl border border-input bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring text-sm"
           disabled={isLoading}
         />
         {searching && (
           <div className="absolute right-3 top-3">
-            <div className="animate-spin w-5 h-5 border-2 border-emerald-500 border-t-transparent rounded-full" />
+            <div className="animate-spin w-5 h-5 border-2 border-success border-t-transparent rounded-full" />
           </div>
         )}
       </div>
@@ -69,7 +69,7 @@ export default function FoodSearch({ onSelectFood, isLoading }: FoodSearchProps)
       <div className="space-y-2 max-h-96 overflow-y-auto">
         {showRecent && recentFoods.length > 0 && (
           <>
-            <h3 className="text-xs font-semibold text-gray-600 uppercase tracking-wide px-1">Recent Foods</h3>
+            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide px-1">Recent Foods</h3>
             {recentFoods.map((food) => (
               <button
                 key={food.id}
@@ -88,10 +88,10 @@ export default function FoodSearch({ onSelectFood, isLoading }: FoodSearchProps)
                     onSelectFood(usda_food, food.id);
                   }
                 }}
-                className="w-full text-left p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors border border-gray-200"
+                className="w-full text-left p-3 rounded-xl bg-muted/40 hover:bg-muted transition-colors border border-border"
               >
-                <div className="font-medium text-sm text-gray-900">{food.food_name}</div>
-                <div className="text-xs text-gray-600">
+                <div className="font-medium text-sm text-foreground">{food.food_name}</div>
+                <div className="text-xs text-muted-foreground">
                   {food.serving_defaults?.calories} cal • {food.usage_count} uses
                 </div>
               </button>
@@ -101,7 +101,7 @@ export default function FoodSearch({ onSelectFood, isLoading }: FoodSearchProps)
 
         {query && foods.length > 0 && (
           <>
-            <h3 className="text-xs font-semibold text-gray-600 uppercase tracking-wide px-1 mt-4">Search Results</h3>
+            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide px-1 mt-4">Search Results</h3>
             {foods.map((food) => (
               <FoodCard
                 key={food.fdc_id}
@@ -114,7 +114,7 @@ export default function FoodSearch({ onSelectFood, isLoading }: FoodSearchProps)
 
         {query && !searching && foods.length === 0 && (
           <div className="text-center py-8">
-            <p className="text-gray-600 text-sm">No foods found</p>
+            <p className="text-muted-foreground text-sm">No foods found</p>
           </div>
         )}
       </div>

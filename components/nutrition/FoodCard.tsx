@@ -11,23 +11,23 @@ export default function FoodCard({ food, onSelect }: FoodCardProps) {
   return (
     <button
       onClick={() => onSelect(food)}
-      className="w-full text-left p-3 rounded-lg bg-white border border-gray-200 hover:border-emerald-300 hover:bg-emerald-50 transition-all"
+      className="w-full text-left p-3 rounded-xl bg-card border border-border hover:border-success/40 hover:bg-success/5 transition-all"
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
-          <div className="font-medium text-sm text-gray-900 truncate">
+          <div className="font-medium text-sm text-foreground truncate">
             {food.description}
           </div>
-          <div className="text-xs text-gray-600 mt-1">
+          <div className="text-xs text-muted-foreground mt-1">
             {food.serving_size}
             {food.serving_unit}
           </div>
         </div>
         <div className="text-right flex-shrink-0">
-          <div className="font-semibold text-sm text-gray-900">
+          <div className="font-semibold text-sm text-foreground">
             {Math.round(food.calories_per_serving)}
           </div>
-          <div className="text-xs text-gray-600">kcal</div>
+          <div className="text-xs text-muted-foreground">kcal</div>
         </div>
       </div>
 

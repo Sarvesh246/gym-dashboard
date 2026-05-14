@@ -77,18 +77,18 @@ export default function FoodLogger({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 z-50 flex items-end md:items-center justify-center p-4">
-      <div className="bg-white rounded-t-2xl md:rounded-2xl w-full md:max-w-md max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-black/60 z-50 flex items-end md:items-center justify-center p-4">
+      <div className="bg-card rounded-t-2xl md:rounded-2xl w-full md:max-w-md max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="sticky top-0 bg-white border-b border-gray-200 px-4 py-4 flex items-center justify-between">
-          <h2 className="font-semibold text-gray-900">
+        <div className="sticky top-0 bg-card border-b border-border px-4 py-4 flex items-center justify-between">
+          <h2 className="font-semibold text-foreground">
             {step === "search" && "Log Food"}
             {step === "adjust" && "Adjust Serving"}
             {step === "meal" && "Select Meal Type"}
           </h2>
           <button
             onClick={onClose}
-            className="text-gray-600 hover:text-gray-900 text-lg font-bold"
+            className="text-muted-foreground hover:text-foreground text-lg font-bold"
           >
             ✕
           </button>
@@ -105,8 +105,8 @@ export default function FoodLogger({
 
           {step === "adjust" && selectedFood && (
             <>
-              <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3">
-                <div className="font-semibold text-gray-900 text-sm mb-1">
+              <div className="bg-success/10 border border-success/20 rounded-xl p-3">
+                <div className="font-semibold text-foreground text-sm mb-1">
                   {selectedFood.description}
                 </div>
               </div>
@@ -119,13 +119,13 @@ export default function FoodLogger({
               <div className="flex gap-2 pt-4">
                 <button
                   onClick={() => setStep("search")}
-                  className="flex-1 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-900 font-medium rounded-lg transition-colors"
+                  className="flex-1 px-4 py-2 bg-muted hover:bg-accent text-foreground font-medium rounded-xl transition-colors"
                 >
                   Back
                 </button>
                 <button
                   onClick={() => setStep("meal")}
-                  className="flex-1 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-lg transition-colors"
+                  className="flex-1 px-4 py-2 bg-success hover:bg-success/90 text-white font-medium rounded-xl transition-colors"
                 >
                   Next
                 </button>
@@ -136,7 +136,7 @@ export default function FoodLogger({
           {step === "meal" && (
             <>
               <div>
-                <label className="block text-sm font-medium text-gray-900 mb-3">
+                <label className="block text-sm font-medium text-foreground mb-3">
                   Meal Type
                 </label>
                 <div className="space-y-2">
@@ -145,10 +145,10 @@ export default function FoodLogger({
                       <button
                         key={meal}
                         onClick={() => setSelectedMealType(meal)}
-                        className={`w-full p-3 rounded-lg font-medium transition-colors ${
+                        className={`w-full p-3 rounded-xl font-medium transition-colors ${
                           selectedMealType === meal
-                            ? "bg-emerald-600 text-white"
-                            : "bg-gray-100 text-gray-900 hover:bg-gray-200"
+                            ? "bg-success text-white"
+                            : "bg-muted text-foreground hover:bg-accent"
                         }`}
                       >
                         {meal.charAt(0).toUpperCase() + meal.slice(1)}
@@ -161,14 +161,14 @@ export default function FoodLogger({
               <div className="flex gap-2 pt-4">
                 <button
                   onClick={() => setStep("adjust")}
-                  className="flex-1 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-900 font-medium rounded-lg transition-colors"
+                  className="flex-1 px-4 py-2 bg-muted hover:bg-accent text-foreground font-medium rounded-xl transition-colors"
                 >
                   Back
                 </button>
                 <button
                   onClick={handleLogFood}
                   disabled={isSubmitting}
-                  className="flex-1 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-400 text-white font-medium rounded-lg transition-colors"
+                  className="flex-1 px-4 py-2 bg-success hover:bg-success/90 disabled:opacity-50 text-white font-medium rounded-xl transition-colors"
                 >
                   {isSubmitting ? "Logging..." : "Log Food"}
                 </button>

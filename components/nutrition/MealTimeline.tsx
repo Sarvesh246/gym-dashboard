@@ -67,23 +67,23 @@ export default function MealTimeline({
         );
 
         return (
-          <div key={mealType} className="border border-gray-200 rounded-lg overflow-hidden">
+          <div key={mealType} className="border border-border rounded-xl overflow-hidden">
             {/* Header */}
             <button
               onClick={() => toggleMeal(mealType)}
-              className="w-full px-4 py-3 bg-gray-50 hover:bg-gray-100 flex items-center justify-between transition-colors"
+              className="w-full px-4 py-3 bg-muted/40 hover:bg-muted/70 flex items-center justify-between transition-colors"
             >
-              <h3 className="font-semibold text-gray-900">{mealLabels[mealType]}</h3>
+              <h3 className="font-semibold text-foreground">{mealLabels[mealType]}</h3>
               <div className="flex items-center gap-3">
                 <div className="text-right text-sm">
-                  <div className="font-semibold text-gray-900">
+                  <div className="font-semibold text-foreground">
                     {Math.round(totals.calories)} kcal
                   </div>
-                  <div className="text-xs text-gray-600">
+                  <div className="text-xs text-muted-foreground">
                     P: {Math.round(totals.protein)}g | C: {Math.round(totals.carbs)}g | F: {Math.round(totals.fat)}g
                   </div>
                 </div>
-                <span className="text-gray-600 text-lg">
+                <span className="text-muted-foreground text-lg">
                   {expanded[mealType] ? "▼" : "▶"}
                 </span>
               </div>
@@ -91,34 +91,34 @@ export default function MealTimeline({
 
             {/* Meal items */}
             {expanded[mealType] && (
-              <div className="space-y-2 p-3 bg-white">
+              <div className="space-y-2 p-3 bg-card">
                 {mealLogs.map((log) => (
                   <div
                     key={log.id}
-                    className="flex items-center justify-between p-3 bg-gray-50 rounded hover:bg-gray-100 transition-colors group"
+                    className="flex items-center justify-between p-3 bg-muted/30 rounded-lg hover:bg-muted/60 transition-colors group"
                   >
                     <div className="flex-1 min-w-0">
-                      <div className="font-medium text-sm text-gray-900 truncate">
+                      <div className="font-medium text-sm text-foreground truncate">
                         {log.food_name}
                       </div>
-                      <div className="text-xs text-gray-600">
+                      <div className="text-xs text-muted-foreground">
                         {log.serving_size} {log.serving_unit}
                       </div>
                     </div>
 
                     <div className="flex items-center gap-2">
                       <div className="text-right text-xs">
-                        <div className="font-semibold text-gray-900">
+                        <div className="font-semibold text-foreground">
                           {Math.round(log.calories)}
                         </div>
-                        <div className="text-gray-600">kcal</div>
+                        <div className="text-muted-foreground">kcal</div>
                       </div>
 
                       <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                         {onEditLog && (
                           <button
                             onClick={() => onEditLog(log)}
-                            className="p-1 text-blue-600 hover:bg-blue-50 rounded"
+                            className="p-1 text-primary hover:bg-primary/10 rounded"
                             title="Edit"
                           >
                             ✎
@@ -127,7 +127,7 @@ export default function MealTimeline({
                         {onDeleteLog && (
                           <button
                             onClick={() => onDeleteLog(log.id)}
-                            className="p-1 text-red-600 hover:bg-red-50 rounded"
+                            className="p-1 text-destructive hover:bg-destructive/10 rounded"
                             title="Delete"
                           >
                             ✕
@@ -144,7 +144,7 @@ export default function MealTimeline({
       })}
 
       {Object.values(mealsByType).every((logs) => logs.length === 0) && (
-        <div className="text-center py-8 text-gray-600">
+        <div className="text-center py-8 text-muted-foreground">
           <p className="text-sm">No meals logged yet</p>
         </div>
       )}
