@@ -1,0 +1,83 @@
+{
+  "agents": {
+    "agent-1778764979333-m8aufu": {
+      "agentId": "agent-1778764979333-m8aufu",
+      "agentType": "coder",
+      "status": "idle",
+      "health": 1,
+      "taskCount": 0,
+      "config": {
+        "provider": "anthropic"
+      },
+      "createdAt": "2026-05-14T13:22:59.333Z",
+      "model": "sonnet",
+      "modelRoutedBy": "default"
+    },
+    "agent-1778764983205-jeikzu": {
+      "agentId": "agent-1778764983205-jeikzu",
+      "agentType": "coder",
+      "status": "idle",
+      "health": 1,
+      "taskCount": 0,
+      "config": {
+        "provider": "anthropic"
+      },
+      "createdAt": "2026-05-14T13:23:03.205Z",
+      "model": "sonnet",
+      "modelRoutedBy": "default"
+    },
+    "agent-1778764983917-tnhghu": {
+      "agentId": "agent-1778764983917-tnhghu",
+      "agentType": "architect",
+      "status": "idle",
+      "health": 1,
+      "taskCount": 0,
+      "config": {
+        "provider": "anthropic"
+      },
+      "createdAt": "2026-05-14T13:23:03.917Z",
+      "model": "opus",
+      "modelRoutedBy": "default"
+    },
+    "agent-1778764984624-w4mye6": {
+      "agentId": "agent-1778764984624-w4mye6",
+      "agentType": "tester",
+      "status": "idle",
+      "health": 1,
+      "taskCount": 0,
+      "config": {
+        "provider": "anthropic"
+      },
+      "createdAt": "2026-05-14T13:23:04.624Z",
+      "model": "sonnet",
+      "modelRoutedBy": "default"
+    },
+    "agent-1778764985355-5wgpbn": {
+      "agentId": "agent-1778764985355-5wgpbn",
+      "agentType": "performance-engineer",
+      "status": "idle",
+      "health": 1,
+      "taskCount": 0,
+      "config": {
+        "provider": "anthropic"
+      },
+      "createdAt": "2026-05-14T13:23:05.355Z",
+      "model": "sonnet",
+      "modelRoutedBy": "default"
+    },
+    "agent-1778764986074-q3p3qr": {
+      "agentId": "agent-1778764986074-q3p3qr",
+      "agentType": "reviewer",
+      "status": "idle",
+      "health": 1,
+      "taskCount": 0,
+      "config": {
+        "provider": "anthropic"
+      },
+      "createdAt": "2026-05-14T13:23:06.075Z",
+      "model": "sonnet",
+      "modelRoutedBy": "default"
+    }
+  },
+  "version": "3.0.0"
+}

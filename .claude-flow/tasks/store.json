@@ -1,0 +1,115 @@
+{
+  "tasks": {
+    "task-1778764919213-szoidz": {
+      "taskId": "task-1778764919213-szoidz",
+      "type": "implementation",
+      "description": "Build STAGE 8 - Body Map + Muscle Visualization System: Front-body muscle recovery visualization with heatmap rendering, muscle drilldown interaction, recovery/fatigue/strain visual encoding, imbalance detection. Must integrate with Stage 7 recovery engine and Stage 4 dashboard. Create /body-map route with SVG-based muscle regions, detail panels, mobile bottom sheet. Implement services/body-map/transform.ts, services/muscles/visualization.ts, lib/body-map/mapping.ts. Build components: BodyMapPage, BodyMapCanvas, MuscleRegion, MuscleDetailPanel, MuscleFilterControls. Must feel like Apple Health + sports science dashboard. No gamification, no back view yet. Performance target: <16ms interaction, <200ms API response.",
+      "priority": "normal",
+      "status": "in_progress",
+      "progress": 0,
+      "assignedTo": [
+        "reviewer-mp5iqv9l"
+      ],
+      "tags": [],
+      "createdAt": "2026-05-14T13:21:59.213Z",
+      "startedAt": "2026-05-14T13:23:09.916Z",
+      "completedAt": null
+    },
+    "task-1778765065610-2f860q": {
+      "taskId": "task-1778765065610-2f860q",
+      "type": "research",
+      "description": "Analyze existing codebase (Stages 3-7): extract exercise_library structure, workout_exercises schema, Stage 7 recovery data models (muscle_recovery_score, muscle_fatigue_score, strain_index). Document data structures and relationships for body map integration.",
+      "priority": "normal",
+      "status": "pending",
+      "progress": 0,
+      "assignedTo": [],
+      "tags": [],
+      "createdAt": "2026-05-14T13:24:25.610Z",
+      "startedAt": null,
+      "completedAt": null
+    },
+    "task-1778765066373-bbb8e0": {
+      "taskId": "task-1778765066373-bbb8e0",
+      "type": "implementation",
+      "description": "Build GET /api/body-map endpoint (app/api/body-map/route.ts): accept range parameter (7d/14d/30d), fetch from Stage 7 recovery engine, return muscle recovery map, fatigue map, strain map, weekly volume per muscle, last trained timestamps, imbalance flags, precomputed UI states. Must cache responses per user + time range. Target <200ms response.",
+      "priority": "normal",
+      "status": "pending",
+      "progress": 0,
+      "assignedTo": [],
+      "tags": [],
+      "createdAt": "2026-05-14T13:24:26.373Z",
+      "startedAt": null,
+      "completedAt": null
+    },
+    "task-1778765067187-yorobh": {
+      "taskId": "task-1778765067187-yorobh",
+      "type": "implementation",
+      "description": "Create lib/body-map/mapping.ts: define 16 muscle regions (chest, upper_chest, shoulders_front/side/rear, biceps, triceps, forearms, abs, obliques, lower_back, quads, hamstrings, glutes, calves). Include SVG coordinates, clickable hitboxes, region->muscle mapping. Use static definitions, zero calculations.",
+      "priority": "normal",
+      "status": "pending",
+      "progress": 0,
+      "assignedTo": [],
+      "tags": [],
+      "createdAt": "2026-05-14T13:24:27.187Z",
+      "startedAt": null,
+      "completedAt": null
+    },
+    "task-1778765068040-adgukb": {
+      "taskId": "task-1778765068040-adgukb",
+      "type": "implementation",
+      "description": "Build services/body-map/transform.ts: convert muscle recovery data to UI format (color mapping: green/yellow/orange/red/gray), normalize fatigue/recovery/strain values (0-100 scale), prepare imbalance flags for display, compute opacity/saturation shifts for dark/light theme.",
+      "priority": "normal",
+      "status": "pending",
+      "progress": 0,
+      "assignedTo": [],
+      "tags": [],
+      "createdAt": "2026-05-14T13:24:28.040Z",
+      "startedAt": null,
+      "completedAt": null
+    },
+    "task-1778765068818-fx08e4": {
+      "taskId": "task-1778765068818-fx08e4",
+      "type": "implementation",
+      "description": "Create services/muscles/visualization.ts: merge workout logs + recovery scores + strain data into display-ready muscle states, compute weekly volume per muscle, prepare heatmap dataset, optimize rendering payload (minimal JSON). Zero recovery calculations here.",
+      "priority": "normal",
+      "status": "pending",
+      "progress": 0,
+      "assignedTo": [],
+      "tags": [],
+      "createdAt": "2026-05-14T13:24:28.818Z",
+      "startedAt": null,
+      "completedAt": null
+    },
+    "task-1778765069549-4oi0qh": {
+      "taskId": "task-1778765069549-4oi0qh",
+      "type": "testing",
+      "description": "Write integration tests: verify API returns correct shape, test transform layer with sample recovery data, validate color encoding, test muscle mapping accuracy against exercise_library, verify imbalance flag display logic.",
+      "priority": "normal",
+      "status": "in_progress",
+      "progress": 0,
+      "assignedTo": [
+        "tester-mp5iqu5j"
+      ],
+      "tags": [],
+      "createdAt": "2026-05-14T13:24:29.549Z",
+      "startedAt": "2026-05-14T13:25:40.777Z",
+      "completedAt": null
+    },
+    "task-1778765074191-2obq6m": {
+      "taskId": "task-1778765074191-2obq6m",
+      "type": "optimization",
+      "description": "Optimize performance: profile SVG rendering with 16 muscle regions, implement React.memo for MuscleRegion components, benchmark API response times, set up caching strategy per user+range, target <16ms interaction response.",
+      "priority": "normal",
+      "status": "in_progress",
+      "progress": 0,
+      "assignedTo": [
+        "performance-engineer-mp5iqupt"
+      ],
+      "tags": [],
+      "createdAt": "2026-05-14T13:24:34.191Z",
+      "startedAt": "2026-05-14T13:25:41.547Z",
+      "completedAt": null
+    }
+  },
+  "version": "3.0.0"
+}
