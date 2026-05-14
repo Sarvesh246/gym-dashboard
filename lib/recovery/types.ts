@@ -160,11 +160,21 @@ export interface RecoveryRecommendation {
 
 // Body map data for frontend visualization
 export interface BodyMapMuscleData {
+  // Current state (with time-decay applied)
   recovery_score: number;
   fatigue_score: number;
+  strain_score: number;
+  soreness_score: number;
   tier: RecoveryTier;
+  // Raw scores (from last workout, no decay)
+  raw_recovery_score?: number;
+  raw_fatigue_score?: number;
+  raw_strain_score?: number;
+  // Training metadata
   last_trained_at: string | null;
+  weekly_volume: number;
   weekly_frequency: number;
+  hypertrophy_load?: number;
 }
 
 export type BodyMapData = Partial<Record<MuscleGroup, BodyMapMuscleData>>;

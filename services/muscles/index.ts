@@ -119,18 +119,33 @@ export async function getBodyMapData(userId: string): Promise<BodyMapData> {
       bodyMap[muscle] = {
         recovery_score,
         fatigue_score,
+        strain_score:      stored.strain_score,
+        soreness_score:    stored.soreness_score,
         tier:              classifyRecoveryTier(recovery_score),
         last_trained_at:   stored.last_trained_at,
         weekly_frequency:  stored.weekly_frequency,
+        weekly_volume:     stored.weekly_volume,
+        hypertrophy_load:  stored.hypertrophy_load,
+        // Raw scores (before time decay)
+        raw_recovery_score: stored.recovery_score,
+        raw_fatigue_score:  stored.fatigue_score,
+        raw_strain_score:   stored.strain_score,
       };
     } else {
       // No training data → fully recovered
       bodyMap[muscle] = {
-        recovery_score:    100,
-        fatigue_score:     0,
-        tier:              "green",
-        last_trained_at:   null,
-        weekly_frequency:  0,
+        recovery_score:     100,
+        fatigue_score:      0,
+        strain_score:       0,
+        soreness_score:     0,
+        tier:               "green",
+        last_trained_at:    null,
+        weekly_frequency:   0,
+        weekly_volume:      0,
+        hypertrophy_load:   0,
+        raw_recovery_score: 100,
+        raw_fatigue_score:  0,
+        raw_strain_score:   0,
       };
     }
   }

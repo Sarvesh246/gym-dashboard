@@ -5,6 +5,7 @@ import {
   Moon,
   User,
   Settings,
+  Activity,
 } from "lucide-react";
 
 export const NAV_ITEMS = [
@@ -12,6 +13,7 @@ export const NAV_ITEMS = [
   { label: "Workouts", href: "/workouts", icon: Dumbbell },
   { label: "Nutrition", href: "/nutrition", icon: Apple },
   { label: "Recovery", href: "/recovery", icon: Moon },
+  { label: "Body Map", href: "/body-map", icon: Activity },
   { label: "Profile", href: "/profile", icon: User },
 ] as const;
 

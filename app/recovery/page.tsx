@@ -44,18 +44,18 @@ export default async function RecoveryPage() {
     Object.keys(bodyMap).length > 0
       ? bodyMap
       : {
-          chest:       { recovery_score: 91, fatigue_score: 9,  tier: "green",  last_trained_at: null, weekly_frequency: 0 },
-          front_delts: { recovery_score: 50, fatigue_score: 50, tier: "orange", last_trained_at: null, weekly_frequency: 0 },
-          biceps:      { recovery_score: 88, fatigue_score: 12, tier: "green",  last_trained_at: null, weekly_frequency: 0 },
-          core:        { recovery_score: 67, fatigue_score: 33, tier: "yellow", last_trained_at: null, weekly_frequency: 0 },
-          quads:       { recovery_score: 81, fatigue_score: 19, tier: "green",  last_trained_at: null, weekly_frequency: 0 },
-          calves:      { recovery_score: 90, fatigue_score: 10, tier: "green",  last_trained_at: null, weekly_frequency: 0 },
-          lats:        { recovery_score: 75, fatigue_score: 25, tier: "yellow", last_trained_at: null, weekly_frequency: 0 },
-          upper_back:  { recovery_score: 78, fatigue_score: 22, tier: "yellow", last_trained_at: null, weekly_frequency: 0 },
-          glutes:      { recovery_score: 82, fatigue_score: 18, tier: "green",  last_trained_at: null, weekly_frequency: 0 },
-          hamstrings:  { recovery_score: 84, fatigue_score: 16, tier: "green",  last_trained_at: null, weekly_frequency: 0 },
-          triceps:     { recovery_score: 79, fatigue_score: 21, tier: "yellow", last_trained_at: null, weekly_frequency: 0 },
-          side_delts:  { recovery_score: 72, fatigue_score: 28, tier: "yellow", last_trained_at: null, weekly_frequency: 0 },
+          chest:       { recovery_score: 91, fatigue_score: 9,  strain_score: 8,  soreness_score: 5,  tier: "green",  last_trained_at: null, weekly_frequency: 0, weekly_volume: 0 },
+          front_delts: { recovery_score: 50, fatigue_score: 50, strain_score: 45, soreness_score: 38, tier: "orange", last_trained_at: null, weekly_frequency: 0, weekly_volume: 0 },
+          biceps:      { recovery_score: 88, fatigue_score: 12, strain_score: 10, soreness_score: 8,  tier: "green",  last_trained_at: null, weekly_frequency: 0, weekly_volume: 0 },
+          core:        { recovery_score: 67, fatigue_score: 33, strain_score: 28, soreness_score: 22, tier: "yellow", last_trained_at: null, weekly_frequency: 0, weekly_volume: 0 },
+          quads:       { recovery_score: 81, fatigue_score: 19, strain_score: 16, soreness_score: 12, tier: "green",  last_trained_at: null, weekly_frequency: 0, weekly_volume: 0 },
+          calves:      { recovery_score: 90, fatigue_score: 10, strain_score: 8,  soreness_score: 5,  tier: "green",  last_trained_at: null, weekly_frequency: 0, weekly_volume: 0 },
+          lats:        { recovery_score: 75, fatigue_score: 25, strain_score: 22, soreness_score: 18, tier: "yellow", last_trained_at: null, weekly_frequency: 0, weekly_volume: 0 },
+          upper_back:  { recovery_score: 78, fatigue_score: 22, strain_score: 20, soreness_score: 15, tier: "yellow", last_trained_at: null, weekly_frequency: 0, weekly_volume: 0 },
+          glutes:      { recovery_score: 82, fatigue_score: 18, strain_score: 15, soreness_score: 12, tier: "green",  last_trained_at: null, weekly_frequency: 0, weekly_volume: 0 },
+          hamstrings:  { recovery_score: 84, fatigue_score: 16, strain_score: 14, soreness_score: 10, tier: "green",  last_trained_at: null, weekly_frequency: 0, weekly_volume: 0 },
+          triceps:     { recovery_score: 79, fatigue_score: 21, strain_score: 18, soreness_score: 14, tier: "yellow", last_trained_at: null, weekly_frequency: 0, weekly_volume: 0 },
+          side_delts:  { recovery_score: 72, fatigue_score: 28, strain_score: 25, soreness_score: 20, tier: "yellow", last_trained_at: null, weekly_frequency: 0, weekly_volume: 0 },
         };
 
   // Readiness breakdown items derived from computed scores
