@@ -13,50 +13,76 @@ import {
   upsertSystemicRecovery,
 } from "@/services/recovery";
 import { getAverageMuscleRecovery } from "@/services/muscles";
+import {
+  getDailyHealthMetricsWithDefaults,
+  computeNormalizedHealthScores,
+} from "@/services/health";
 import { createClient } from "@/lib/supabase/server";
+
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+export interface RecoverySnapshot {
+  id: number;
+  user_id: string;
+  snapshot_date: string;
+  readiness_score: number;
+  systemic_fatigue: number;
+  avg_muscle_recovery: number;
+  recovery_tier: string;
+  training_recommendation: string;
+  weekly_strain_accumulation: number;
+  key_suppressors: string[];
+  created_at: string;
+}
 
 // ─── Main readiness computation ───────────────────────────────────────────────
 
 export async function computeReadiness(userId: string): Promise<ReadinessOutput> {
+  const supabase = await createClient();
+  const today = new Date().toISOString().split("T")[0];  // YYYY-MM-DD
+
   // 1. Fetch systemic state (or compute from profile if not stored)
   const systemic = await getSystemicRecovery(userId);
 
   const { systemic_fatigue, sleep_modifier, stress_modifier } =
     systemic ?? (await computeSystemicRecoveryFromProfile(userId));
 
-  // 2. Fetch muscle average recovery
+  // 2. Fetch daily health metrics with profile fallbacks (NEW)
+  const profileModifiers = await getProfileModifiers(userId);
+  const healthMetrics = await getDailyHealthMetricsWithDefaults(
+    userId,
+    today,
+    {
+      sleepQuality: profileModifiers.sleep_quality_score >= 70 ? "high" : profileModifiers.sleep_quality_score >= 55 ? "medium" : "low",
+      stressLevel: profileModifiers.stress_score <= 40 ? "low" : profileModifiers.stress_score <= 60 ? "medium" : "high",
+    },
+    supabase
+  );
+
+  // 3. Compute normalized health scores (NEW)
+  const healthScores = computeNormalizedHealthScores(healthMetrics as any);
+
+  // 4. Fetch muscle average recovery
   const avgMuscleRecovery = await getAverageMuscleRecovery(userId);
 
-  // 3. Fetch 7-day strain accumulation
+  // 5. Fetch 7-day strain accumulation
   const strainAccumulation = await get7DayStrainAccumulation(userId);
 
-  // 4. Pull profile modifiers for sleep / stress
-  const sleepScore  = systemic?.sleep_modifier !== undefined
-    ? 65 + (systemic.sleep_modifier / 20) * 35
-    : 65;
-
-  const stressScore = systemic?.stress_modifier !== undefined
-    ? 100 - (65 + (systemic.stress_modifier / 20) * 35)
-    : 40;
-
-  const hrvScore = systemic?.hrv_modifier !== undefined
-    ? 65 + (systemic.hrv_modifier / 20) * 35
-    : 65;
-
-  // 5. Estimate consecutive training days from profile
+  // 6. Estimate consecutive training days
   const consecutiveDays = await estimateConsecutiveDays(userId);
 
+  // 7. Calculate readiness with daily health data (prioritize logged metrics)
   const result = calculateReadiness({
     systemic_fatigue,
-    sleep_quality_score:      sleepScore,
-    stress_score:             stressScore,
-    hrv_score:                hrvScore,
+    sleep_quality_score:      healthScores.sleep_quality_score,  // now from daily metrics
+    stress_score:             healthScores.stress_score,  // now from daily metrics
+    hrv_score:                healthScores.hrv_score,  // now from daily metrics
     strain_accumulation:      strainAccumulation,
     avg_muscle_recovery:      avgMuscleRecovery,
     consecutive_training_days: consecutiveDays,
   });
 
-  // 6. Persist back so the systemic record is up to date
+  // 8. Persist back so the systemic record is up to date
   await upsertSystemicRecovery(userId, {
     readiness_score:     result.readiness_score,
     systemic_fatigue,
@@ -65,7 +91,11 @@ export async function computeReadiness(userId: string): Promise<ReadinessOutput>
     hrv_modifier:        systemic?.hrv_modifier ?? 0,
     strain_accumulation: strainAccumulation,
     recovery_tier:       result.tier,
+    training_recommendation: result.training_recommendation,  // NEW: persist recommendation
   });
+
+  // 9. Persist recovery snapshot for trend analysis (NEW)
+  await persistRecoverySnapshot(userId, today, result, strainAccumulation);
 
   return result;
 }
@@ -139,5 +169,107 @@ async function estimateConsecutiveDays(userId: string): Promise<number> {
     return consecutive;
   } catch {
     return 0;
+  }
+}
+
+// ─── Recovery snapshot persistence (NEW) ──────────────────────────────────────
+
+/**
+ * Persist daily recovery snapshot for trend analysis.
+ * Idempotent: same date = upsert, not duplicate.
+ */
+export async function persistRecoverySnapshot(
+  userId: string,
+  date: string,
+  readinessOutput: ReadinessOutput,
+  weeklyStrain: number
+): Promise<RecoverySnapshot | null> {
+  try {
+    const supabase = await createClient();
+    const payload = {
+      user_id: userId,
+      snapshot_date: date,
+      readiness_score: readinessOutput.readiness_score,
+      systemic_fatigue: 0,  // TODO: get from current systemic state
+      avg_muscle_recovery: 0,  // TODO: get from muscle states average
+      recovery_tier: readinessOutput.tier,
+      training_recommendation: readinessOutput.training_recommendation,
+      weekly_strain_accumulation: weeklyStrain,
+      key_suppressors: readinessOutput.suppression_factors,
+    };
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error } = await (supabase as any)
+      .from("recovery_snapshots")
+      .upsert(payload, { onConflict: "user_id,snapshot_date" })
+      .select()
+      .single();
+
+    if (error) {
+      console.error("[persistRecoverySnapshot] Error:", error.message);
+      return null;
+    }
+
+    return data || null;
+  } catch (err) {
+    console.error("[persistRecoverySnapshot] Exception:", err);
+    return null;
+  }
+}
+
+/**
+ * Fetch recovery snapshot for a specific date.
+ */
+export async function getRecoverySnapshot(userId: string, date: string): Promise<RecoverySnapshot | null> {
+  try {
+    const supabase = await createClient();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error } = await (supabase as any)
+      .from("recovery_snapshots")
+      .select("*")
+      .eq("user_id", userId)
+      .eq("snapshot_date", date)
+      .single();
+
+    if (error && error.code !== "PGRST116") {
+      console.error("[getRecoverySnapshot] Error:", error.message);
+      return null;
+    }
+
+    return data || null;
+  } catch (err) {
+    console.error("[getRecoverySnapshot] Exception:", err);
+    return null;
+  }
+}
+
+/**
+ * Fetch recovery snapshots for a date range (e.g., last 30 days).
+ */
+export async function getRecoverySnapshots(
+  userId: string,
+  startDate: string,
+  endDate: string
+): Promise<RecoverySnapshot[]> {
+  try {
+    const supabase = await createClient();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error } = await (supabase as any)
+      .from("recovery_snapshots")
+      .select("*")
+      .eq("user_id", userId)
+      .gte("snapshot_date", startDate)
+      .lte("snapshot_date", endDate)
+      .order("snapshot_date", { ascending: false });
+
+    if (error) {
+      console.error("[getRecoverySnapshots] Error:", error.message);
+      return [];
+    }
+
+    return data || [];
+  } catch (err) {
+    console.error("[getRecoverySnapshots] Exception:", err);
+    return [];
   }
 }
