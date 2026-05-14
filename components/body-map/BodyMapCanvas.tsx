@@ -182,31 +182,31 @@ export const BodyMapCanvas: React.FC<BodyMapCanvasProps> = ({
           {/* Head — sphere with slight flat bottom */}
           <circle cx="50" cy="10" r="8.5" />
 
-          {/* Neck */}
-          <path d="M 46.5,18 L 53.5,18 L 53.5,27 L 46.5,27 Z" />
+          {/* Neck — rounded corners */}
+          <path d="M 47.5,18 L 52.5,18 Q 53.5,18 53.5,19 L 53.5,26 Q 53.5,27 52.5,27 L 47.5,27 Q 46.5,27 46.5,26 L 46.5,19 Q 46.5,18 47.5,18 Z" />
 
           {/* Torso — shoulders curve inward to waist, then flare to hips */}
           <path d="M 16,27 Q 33,24.5 50,25.5 Q 67,24.5 84,27 L 80,62 L 71,90 L 73,112 L 27,112 L 29,90 L 20,62 Z" />
 
-          {/* Left upper arm */}
-          <path d="M 10.5,27 L 19,27 L 18,86 L 10.5,86 Z" />
-          {/* Right upper arm */}
-          <path d="M 81,27 L 89.5,27 L 89.5,86 L 82,86 Z" />
+          {/* Left upper arm — rounded corners */}
+          <path d="M 11.5,27 Q 10.5,27 10.5,28 L 10.5,85 Q 10.5,86 11.5,86 L 18,86 Q 19,86 19,85 L 19,28 Q 19,27 18,27 Z" />
+          {/* Right upper arm — rounded corners */}
+          <path d="M 81,27 Q 80,27 80,28 L 80,85 Q 80,86 81,86 L 89.5,86 Q 90.5,86 90.5,85 L 90.5,28 Q 90.5,27 89.5,27 Z" />
 
-          {/* Left forearm — slight taper */}
-          <path d="M 10.5,85.5 L 18,85.5 L 17,130 L 11,130 Z" />
-          {/* Right forearm */}
-          <path d="M 82,85.5 L 89.5,85.5 L 89,130 L 83,130 Z" />
+          {/* Left forearm — slight taper with rounded corners */}
+          <path d="M 11,85.5 Q 10.5,85.5 10.5,86.5 L 11,130 Q 11,131 12,131 L 17,131 Q 18,131 18,130 L 18,85.5 Q 18,84.5 17,84.5 Z" />
+          {/* Right forearm — with rounded corners */}
+          <path d="M 83,85.5 Q 82,84.5 81,84.5 L 89.5,84.5 Q 90.5,84.5 90.5,85.5 L 89,130 Q 89,131 88,131 L 83,131 Q 82,131 82,130 Z" />
 
-          {/* Left thigh */}
-          <path d="M 27,112 L 44,112 L 43.5,174 L 28.5,174 Z" />
-          {/* Right thigh */}
-          <path d="M 56,112 L 73,112 L 71.5,174 L 56.5,174 Z" />
+          {/* Left thigh — rounded corners */}
+          <path d="M 27,112 Q 26,112 26,113 L 28.5,174 Q 28.5,175 29.5,175 L 43.5,175 Q 44.5,175 44.5,174 L 44,112 Q 44,112 43,112 Z" />
+          {/* Right thigh — rounded corners */}
+          <path d="M 57,112 Q 56,112 56,113 L 56.5,174 Q 56.5,175 57.5,175 L 71.5,175 Q 72.5,175 72.5,174 L 73,112 Q 73,112 72,112 Z" />
 
-          {/* Left calf */}
-          <path d="M 28.5,173.5 L 43.5,173.5 L 42.5,215 L 30,215 Z" />
-          {/* Right calf */}
-          <path d="M 56.5,173.5 L 71.5,173.5 L 70,215 L 57.5,215 Z" />
+          {/* Left calf — rounded corners */}
+          <path d="M 30,173.5 Q 28.5,173.5 28.5,174.5 L 30,215 Q 30,216 31,216 L 42.5,216 Q 43.5,216 43.5,215 L 43.5,173.5 Q 43.5,173 42.5,173 Z" />
+          {/* Right calf — rounded corners */}
+          <path d="M 57.5,173.5 Q 56.5,173 55.5,173.5 L 57.5,215 Q 57.5,216 58.5,216 L 70,216 Q 71,216 71,215 L 70,173.5 Q 70,173 69.5,173 Z" />
         </g>
 
         {/* ── Top-edge specular shine across the torso shoulders ─────────── */}
