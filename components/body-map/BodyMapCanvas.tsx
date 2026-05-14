@@ -9,7 +9,6 @@ import {
 } from "@/lib/body-map/mapping";
 import {
   getMuscleFillColor,
-  getFatigueOpacity,
   getRecoveryTier,
 } from "@/lib/body-map/visualization";
 
@@ -69,18 +68,38 @@ export const BodyMapCanvas: React.FC<BodyMapCanvasProps> = ({
 
     const tier = hasData ? getRecoveryTier(recoveryScore) : "gray";
     const fillColor = getMuscleFillColor(tier);
-    const baseOpacity = hasData ? getFatigueOpacity(fatigueScore) : 0.45;
 
     const isHovered = hoveredMuscle === muscle;
     const isSelected = selectedMuscle === muscle;
-    const opacity = isHovered ? Math.min(baseOpacity + 0.2, 1) : baseOpacity;
+
+    // Fatigue subtly drives rest-state opacity so high-load muscles read as more present
+    const fatigueFactor = hasData ? Math.max(0, Math.min(100, fatigueScore)) / 100 : 0.3;
+    const baseFillOpacity = 0.20 + fatigueFactor * 0.15; // 0.20–0.35
+
+    const fillOpacity = isSelected ? 0.55 : isHovered ? 0.45 : baseFillOpacity;
+    const strokeColor = isSelected ? "#e2e8f0" : fillColor;
+    const strokeOpacity = isSelected ? 0.92 : isHovered ? 1 : 0.70;
+    const strokeWidth = isSelected ? 0.80 : isHovered ? 0.60 : 0.38;
+
+    // Ambient glow for overloaded/high-fatigue muscles even at rest
+    const ambientGlow = !isHovered && !isSelected && (tier === "red" || (tier === "orange" && fatigueFactor > 0.65));
+    const filter = isSelected
+      ? "url(#glow-strong)"
+      : isHovered
+      ? "url(#glow-hover)"
+      : ambientGlow
+      ? "url(#glow-ambient)"
+      : undefined;
 
     const shapeProps: Record<string, unknown> = {
       fill: fillColor,
-      opacity,
-      stroke: isSelected ? "#ffffff" : isHovered ? fillColor : "none",
-      strokeWidth: isSelected ? 1 : isHovered ? 0.5 : 0,
-      className: "cursor-pointer transition-opacity duration-150",
+      fillOpacity,
+      stroke: strokeColor,
+      strokeOpacity,
+      strokeWidth,
+      filter,
+      style: { transition: "fill-opacity 0.18s ease, stroke-opacity 0.18s ease, stroke-width 0.18s ease" },
+      className: "cursor-pointer",
       onMouseEnter: () => handleMouseEnter(muscle),
       onMouseLeave: handleMouseLeave,
       onClick: () => onMuscleClick(muscle),
@@ -97,51 +116,117 @@ export const BodyMapCanvas: React.FC<BodyMapCanvasProps> = ({
     <div className="flex justify-center items-center w-full py-4">
       <svg
         viewBox="0 0 100 220"
-        className="w-full max-w-[180px] sm:max-w-[220px] md:max-w-[260px] h-auto"
+        className="w-full max-w-[200px] sm:max-w-[240px] md:max-w-[280px] h-auto drop-shadow-2xl"
         xmlns="http://www.w3.org/2000/svg"
         aria-label="Body muscle map — click a muscle for details"
       >
-        {/* ── Body silhouette ─────────────────────────────────────────── */}
-        <g className="fill-slate-300 dark:fill-slate-600" stroke="none">
-          {/* Head */}
+        <defs>
+          {/* ── Mannequin fill: horizontal gradient gives left/right rim depth ── */}
+          <linearGradient id="bodyFillGrad" x1="0" y1="0" x2="100" y2="0" gradientUnits="userSpaceOnUse">
+            <stop offset="0%"   stopColor="#0a1628" />
+            <stop offset="18%"  stopColor="#14263d" />
+            <stop offset="50%"  stopColor="#1c3350" />
+            <stop offset="82%"  stopColor="#14263d" />
+            <stop offset="100%" stopColor="#0a1628" />
+          </linearGradient>
+
+          {/* ── Rim light: blue-steel highlights on the silhouette edges ── */}
+          <linearGradient id="rimLightGrad" x1="0" y1="0" x2="100" y2="0" gradientUnits="userSpaceOnUse">
+            <stop offset="0%"   stopColor="#5b9ec9" stopOpacity="0.90" />
+            <stop offset="28%"  stopColor="#3a6a8a" stopOpacity="0.28" />
+            <stop offset="72%"  stopColor="#3a6a8a" stopOpacity="0.28" />
+            <stop offset="100%" stopColor="#5b9ec9" stopOpacity="0.90" />
+          </linearGradient>
+
+          {/* ── Inner top highlight line to reinforce "3-D panel" look ── */}
+          <linearGradient id="topShineGrad" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%"   stopColor="#7ab8d9" stopOpacity="0" />
+            <stop offset="30%"  stopColor="#7ab8d9" stopOpacity="0.35" />
+            <stop offset="70%"  stopColor="#7ab8d9" stopOpacity="0.35" />
+            <stop offset="100%" stopColor="#7ab8d9" stopOpacity="0" />
+          </linearGradient>
+
+          {/* ── Glow filters ── */}
+          {/* Subtle ambient glow for overloaded/high-fatigue nodes */}
+          <filter id="glow-ambient" x="-35%" y="-35%" width="170%" height="170%">
+            <feGaussianBlur in="SourceGraphic" stdDeviation="0.8" result="blur" />
+            <feMerge>
+              <feMergeNode in="blur" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+
+          {/* Hover — bright halo */}
+          <filter id="glow-hover" x="-45%" y="-45%" width="190%" height="190%">
+            <feGaussianBlur in="SourceGraphic" stdDeviation="1.4" result="blur" />
+            <feMerge>
+              <feMergeNode in="blur" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+
+          {/* Selected — strong double-halo */}
+          <filter id="glow-strong" x="-65%" y="-65%" width="230%" height="230%">
+            <feGaussianBlur in="SourceGraphic" stdDeviation="2.4" result="blur1" />
+            <feGaussianBlur in="SourceGraphic" stdDeviation="1.0" result="blur2" />
+            <feMerge>
+              <feMergeNode in="blur1" />
+              <feMergeNode in="blur2" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+        </defs>
+
+        {/* ── Mannequin silhouette ───────────────────────────────────────── */}
+        <g fill="url(#bodyFillGrad)" stroke="url(#rimLightGrad)" strokeWidth="0.55" strokeLinejoin="round">
+          {/* Head — sphere with slight flat bottom */}
           <circle cx="50" cy="10" r="8.5" />
+
           {/* Neck */}
-          <rect x="46" y="18" width="8" height="9" />
-          {/* Torso — shoulder-wide at top, tapers to waist, flares slightly at hips */}
-          <path d="M 16,27 L 84,27 L 80,62 L 72,90 L 74,112 L 26,112 L 28,90 L 20,62 Z" />
+          <path d="M 46.5,18 L 53.5,18 L 53.5,27 L 46.5,27 Z" />
+
+          {/* Torso — shoulders curve inward to waist, then flare to hips */}
+          <path d="M 16,27 Q 33,24.5 50,25.5 Q 67,24.5 84,27 L 80,62 L 71,90 L 73,112 L 27,112 L 29,90 L 20,62 Z" />
+
           {/* Left upper arm */}
-          <path d="M 10,27 L 19,27 L 18,86 L 10,86 Z" />
+          <path d="M 10.5,27 L 19,27 L 18,86 L 10.5,86 Z" />
           {/* Right upper arm */}
-          <path d="M 81,27 L 90,27 L 90,86 L 82,86 Z" />
-          {/* Left forearm */}
-          <path d="M 10,85 L 18,85 L 17,130 L 10,130 Z" />
+          <path d="M 81,27 L 89.5,27 L 89.5,86 L 82,86 Z" />
+
+          {/* Left forearm — slight taper */}
+          <path d="M 10.5,85.5 L 18,85.5 L 17,130 L 11,130 Z" />
           {/* Right forearm */}
-          <path d="M 82,85 L 90,85 L 90,130 L 83,130 Z" />
+          <path d="M 82,85.5 L 89.5,85.5 L 89,130 L 83,130 Z" />
+
           {/* Left thigh */}
-          <path d="M 26,112 L 44,112 L 44,174 L 28,174 Z" />
+          <path d="M 27,112 L 44,112 L 43.5,174 L 28.5,174 Z" />
           {/* Right thigh */}
-          <path d="M 56,112 L 74,112 L 72,174 L 56,174 Z" />
+          <path d="M 56,112 L 73,112 L 71.5,174 L 56.5,174 Z" />
+
           {/* Left calf */}
-          <path d="M 28,173 L 44,173 L 43,215 L 30,215 Z" />
+          <path d="M 28.5,173.5 L 43.5,173.5 L 42.5,215 L 30,215 Z" />
           {/* Right calf */}
-          <path d="M 56,173 L 72,173 L 70,215 L 57,215 Z" />
+          <path d="M 56.5,173.5 L 71.5,173.5 L 70,215 L 57.5,215 Z" />
         </g>
 
-        {/* ── Muscle overlays ─────────────────────────────────────────── */}
+        {/* ── Top-edge specular shine across the torso shoulders ─────────── */}
+        <path
+          d="M 19,27 Q 34,24 50,25 Q 66,24 81,27"
+          fill="none"
+          stroke="url(#topShineGrad)"
+          strokeWidth="0.7"
+          strokeLinecap="round"
+          opacity="0.6"
+          pointerEvents="none"
+        />
+
+        {/* ── Muscle data overlays ─────────────────────────────────────────── */}
         <g>
           {BODY_MAP_MUSCLES.map((muscle) =>
             renderMuscleRegion(muscle as MuscleGroup)
           )}
         </g>
       </svg>
-
-      {/* Recovery colour legend */}
-      <div className="hidden" aria-hidden="true">
-        <span style={{ color: "#22C55E" }}>Green = full recovery</span>
-        <span style={{ color: "#F59E0B" }}>Yellow = moderate fatigue</span>
-        <span style={{ color: "#F97316" }}>Orange = high fatigue</span>
-        <span style={{ color: "#EF4444" }}>Red = overloaded</span>
-      </div>
     </div>
   );
 };
