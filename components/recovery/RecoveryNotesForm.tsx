@@ -51,6 +51,12 @@ export function RecoveryNotesForm({ onSubmit, isLoading = false }: RecoveryNotes
   const [error, setError] = useState<string>("");
   const [success, setSuccess] = useState(false);
 
+  const handleMuscleGroupChange = (value: string | null) => {
+    if (value !== null) {
+      setMuscleGroup(value);
+    }
+  };
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
@@ -89,7 +95,7 @@ export function RecoveryNotesForm({ onSubmit, isLoading = false }: RecoveryNotes
             <Label htmlFor="muscle-group" className="text-sm font-medium">
               Muscle Group
             </Label>
-            <Select value={muscleGroup} onValueChange={setMuscleGroup}>
+            <Select value={muscleGroup} onValueChange={handleMuscleGroupChange}>
               <SelectTrigger id="muscle-group">
                 <SelectValue placeholder="Select muscle group..." />
               </SelectTrigger>

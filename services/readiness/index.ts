@@ -91,7 +91,6 @@ export async function computeReadiness(userId: string): Promise<ReadinessOutput>
     hrv_modifier:        systemic?.hrv_modifier ?? 0,
     strain_accumulation: strainAccumulation,
     recovery_tier:       result.tier,
-    training_recommendation: result.training_recommendation,  // NEW: persist recommendation
   });
 
   // 9. Persist recovery snapshot for trend analysis (NEW)

@@ -1,7 +1,5 @@
 "use client";
 
-import { CircleProgress } from "@/components/ui/circle-progress";
-
 interface ReadinessBadgeProps {
   score: number;  // 0-100
   tier: "green" | "yellow" | "orange" | "red";
@@ -30,13 +28,15 @@ export function ReadinessBadge({ score, tier, trainingRecommendation }: Readines
     red: "text-red-600 dark:text-red-400",
   }[tier];
 
-  const recommendationEmoji = {
+  const recommendationEmojiMap = {
     full_intensity: "💪",
     moderate_intensity: "⚠️",
     reduced_volume: "📉",
     active_recovery: "🚶",
     rest: "😴",
-  }[trainingRecommendation as keyof typeof recommendationEmoji] || "";
+  } as const;
+
+  const recommendationEmoji = recommendationEmojiMap[trainingRecommendation as keyof typeof recommendationEmojiMap] || "";
 
   return (
     <div className="flex items-center gap-3 rounded-lg border border-border bg-card p-3">
