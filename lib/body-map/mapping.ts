@@ -1,29 +1,32 @@
 /**
  * Body Map Muscle Mapping Layer
- * Defines SVG coordinate system, muscle regions, and agonist/antagonist pairs
- * Front-facing minimalist geometric silhouette (viewBox: 0 0 100 200)
+ * Front-facing bilateral silhouette, viewBox 0 0 100 220
+ * Each muscle group can have multiple shapes (bilateral muscles appear on both sides)
  */
 
 import { MuscleGroup } from "@/lib/recovery/types";
 
+export interface MuscleShape {
+  svgElement: "circle" | "ellipse" | "polygon" | "path" | "rect";
+  cx?: number;
+  cy?: number;
+  r?: number;
+  rx?: number;
+  ry?: number;
+  points?: string;
+  d?: string;
+  x?: number;
+  y?: number;
+  width?: number;
+  height?: number;
+}
+
 export interface MuscleRegion {
   id: string;
   name: MuscleGroup;
-  label: string; // Display name
-  svgElement: "circle" | "ellipse" | "polygon" | "path" | "rect";
-  // SVG coordinates (viewBox: 0 0 100 200)
-  cx?: number; // center x for circle/ellipse
-  cy?: number; // center y for circle/ellipse
-  r?: number; // radius for circle
-  rx?: number; // x radius for ellipse
-  ry?: number; // y radius for ellipse
-  points?: string; // polygon points
-  d?: string; // SVG path
-  width?: number; // for rect
-  height?: number; // for rect
-  x?: number; // rect x
-  y?: number; // rect y
-  // For hit detection
+  label: string;
+  shapes: MuscleShape[];
+  // Bounding box for hit detection (viewBox coordinates)
   viewBoxCoords: {
     x: number;
     y: number;
@@ -33,216 +36,209 @@ export interface MuscleRegion {
 }
 
 /**
- * Minimalist geometric front-body silhouette
- * Viewbox: 0 0 100 200 (100 wide, 200 tall)
+ * Body layout (viewBox 0 0 100 220):
  *
- * Layout:
- * - Head area: 0-30px
- * - Shoulders/upper back: 30-70px
- * - Core/midsection: 40-120px
- * - Legs: 120-200px
+ *  Head:         cx=50  cy=10   r=8.5
+ *  Neck:         x=46–54        y=18–27
+ *  Torso:        x=16–84 (shoulder) → x=26–74 (hip)  y=27–112
+ *  Left arm:     x=10–19        y=27–130
+ *  Right arm:    x=81–90        y=27–130
+ *  Left leg:     x=26–44        y=112–215
+ *  Right leg:    x=56–74        y=112–215
+ *
+ *  Arm centre x: Left=14, Right=86
+ *  Leg centre x: Left=35, Right=65
  */
 export const MUSCLE_REGIONS: Record<MuscleGroup, MuscleRegion> = {
-  // Upper Body
+  // ── Chest ──────────────────────────────────────────────────────────────
   chest: {
     id: "chest",
     name: "chest",
     label: "Chest",
-    svgElement: "ellipse",
-    cx: 50,
-    cy: 60,
-    rx: 18,
-    ry: 22,
-    viewBoxCoords: { x: 32, y: 38, width: 36, height: 44 },
+    shapes: [
+      { svgElement: "ellipse", cx: 36, cy: 53, rx: 9, ry: 12 },
+      { svgElement: "ellipse", cx: 64, cy: 53, rx: 9, ry: 12 },
+    ],
+    viewBoxCoords: { x: 27, y: 41, width: 46, height: 24 },
   },
   upper_chest: {
     id: "upper_chest",
     name: "upper_chest",
     label: "Upper Chest",
-    svgElement: "ellipse",
-    cx: 50,
-    cy: 45,
-    rx: 18,
-    ry: 12,
-    viewBoxCoords: { x: 32, y: 33, width: 36, height: 24 },
+    shapes: [
+      { svgElement: "ellipse", cx: 36, cy: 39, rx: 9, ry: 7 },
+      { svgElement: "ellipse", cx: 64, cy: 39, rx: 9, ry: 7 },
+    ],
+    viewBoxCoords: { x: 27, y: 32, width: 46, height: 14 },
   },
+
+  // ── Shoulders ──────────────────────────────────────────────────────────
   front_delts: {
     id: "front_delts",
     name: "front_delts",
     label: "Front Delts",
-    svgElement: "circle",
-    cx: 25,
-    cy: 50,
-    r: 8,
-    viewBoxCoords: { x: 17, y: 42, width: 16, height: 16 },
+    shapes: [
+      { svgElement: "ellipse", cx: 21, cy: 33, rx: 7, ry: 7 },
+      { svgElement: "ellipse", cx: 79, cy: 33, rx: 7, ry: 7 },
+    ],
+    viewBoxCoords: { x: 14, y: 26, width: 72, height: 14 },
   },
   side_delts: {
     id: "side_delts",
     name: "side_delts",
     label: "Side Delts",
-    svgElement: "circle",
-    cx: 20,
-    cy: 55,
-    r: 7,
-    viewBoxCoords: { x: 13, y: 48, width: 14, height: 14 },
+    shapes: [
+      { svgElement: "ellipse", cx: 12, cy: 40, rx: 4, ry: 8 },
+      { svgElement: "ellipse", cx: 88, cy: 40, rx: 4, ry: 8 },
+    ],
+    viewBoxCoords: { x: 8, y: 32, width: 80, height: 16 },
   },
   rear_delts: {
     id: "rear_delts",
     name: "rear_delts",
     label: "Rear Delts",
-    svgElement: "circle",
-    cx: 15,
-    cy: 58,
-    r: 6,
-    viewBoxCoords: { x: 9, y: 52, width: 12, height: 12 },
+    shapes: [
+      { svgElement: "ellipse", cx: 12, cy: 30, rx: 4, ry: 5 },
+      { svgElement: "ellipse", cx: 88, cy: 30, rx: 4, ry: 5 },
+    ],
+    viewBoxCoords: { x: 8, y: 25, width: 80, height: 10 },
   },
+
+  // ── Upper back (visible from front as back layer) ──────────────────────
+  traps: {
+    id: "traps",
+    name: "traps",
+    label: "Traps",
+    shapes: [
+      { svgElement: "polygon", points: "44,21 56,21 63,32 37,32" },
+    ],
+    viewBoxCoords: { x: 37, y: 21, width: 26, height: 11 },
+  },
+  upper_back: {
+    id: "upper_back",
+    name: "upper_back",
+    label: "Upper Back",
+    shapes: [
+      { svgElement: "ellipse", cx: 50, cy: 50, rx: 15, ry: 15 },
+    ],
+    viewBoxCoords: { x: 35, y: 35, width: 30, height: 30 },
+  },
+
+  // ── Arms ───────────────────────────────────────────────────────────────
   biceps: {
     id: "biceps",
     name: "biceps",
     label: "Biceps",
-    svgElement: "ellipse",
-    cx: 30,
-    cy: 75,
-    rx: 6,
-    ry: 16,
-    viewBoxCoords: { x: 24, y: 59, width: 12, height: 32 },
+    shapes: [
+      { svgElement: "ellipse", cx: 14, cy: 59, rx: 3.5, ry: 13 },
+      { svgElement: "ellipse", cx: 86, cy: 59, rx: 3.5, ry: 13 },
+    ],
+    viewBoxCoords: { x: 10, y: 46, width: 76, height: 26 },
   },
   triceps: {
     id: "triceps",
     name: "triceps",
     label: "Triceps",
-    svgElement: "ellipse",
-    cx: 70,
-    cy: 75,
-    rx: 6,
-    ry: 16,
-    viewBoxCoords: { x: 64, y: 59, width: 12, height: 32 },
+    shapes: [
+      { svgElement: "ellipse", cx: 11, cy: 61, rx: 3, ry: 12 },
+      { svgElement: "ellipse", cx: 89, cy: 61, rx: 3, ry: 12 },
+    ],
+    viewBoxCoords: { x: 8, y: 49, width: 80, height: 24 },
   },
   forearms: {
     id: "forearms",
     name: "forearms",
     label: "Forearms",
-    svgElement: "ellipse",
-    cx: 50,
-    cy: 100,
-    rx: 8,
-    ry: 18,
-    viewBoxCoords: { x: 42, y: 82, width: 16, height: 36 },
+    shapes: [
+      { svgElement: "ellipse", cx: 14, cy: 104, rx: 3, ry: 14 },
+      { svgElement: "ellipse", cx: 86, cy: 104, rx: 3, ry: 14 },
+    ],
+    viewBoxCoords: { x: 10, y: 90, width: 76, height: 28 },
   },
 
-  // Back/Posterior (represented on sides for front view)
-  upper_back: {
-    id: "upper_back",
-    name: "upper_back",
-    label: "Upper Back",
-    svgElement: "ellipse",
-    cx: 50,
-    cy: 52,
-    rx: 20,
-    ry: 18,
-    viewBoxCoords: { x: 30, y: 34, width: 40, height: 36 },
-  },
-  traps: {
-    id: "traps",
-    name: "traps",
-    label: "Traps",
-    svgElement: "polygon",
-    points: "40,30 60,30 55,55 45,55",
-    viewBoxCoords: { x: 35, y: 25, width: 30, height: 35 },
-  },
+  // ── Lats (sides of torso, visible from front) ─────────────────────────
   lats: {
     id: "lats",
     name: "lats",
     label: "Lats",
-    svgElement: "ellipse",
-    cx: 50,
-    cy: 85,
-    rx: 22,
-    ry: 20,
-    viewBoxCoords: { x: 28, y: 65, width: 44, height: 40 },
+    shapes: [
+      { svgElement: "ellipse", cx: 24, cy: 75, rx: 8, ry: 21 },
+      { svgElement: "ellipse", cx: 76, cy: 75, rx: 8, ry: 21 },
+    ],
+    viewBoxCoords: { x: 16, y: 54, width: 58, height: 42 },
   },
+
+  // ── Core / Lower torso ────────────────────────────────────────────────
   lower_back: {
     id: "lower_back",
     name: "lower_back",
     label: "Lower Back",
-    svgElement: "ellipse",
-    cx: 50,
-    cy: 105,
-    rx: 20,
-    ry: 16,
-    viewBoxCoords: { x: 30, y: 89, width: 40, height: 32 },
+    shapes: [
+      { svgElement: "ellipse", cx: 50, cy: 100, rx: 10, ry: 9 },
+    ],
+    viewBoxCoords: { x: 40, y: 91, width: 20, height: 18 },
   },
-
-  // Core
   core: {
     id: "core",
     name: "core",
     label: "Core",
-    svgElement: "ellipse",
-    cx: 50,
-    cy: 95,
-    rx: 14,
-    ry: 18,
-    viewBoxCoords: { x: 36, y: 77, width: 28, height: 36 },
+    shapes: [
+      { svgElement: "ellipse", cx: 50, cy: 83, rx: 11, ry: 17 },
+    ],
+    viewBoxCoords: { x: 39, y: 66, width: 22, height: 34 },
   },
 
-  // Lower Body
+  // ── Lower body ─────────────────────────────────────────────────────────
   glutes: {
     id: "glutes",
     name: "glutes",
     label: "Glutes",
-    svgElement: "ellipse",
-    cx: 50,
-    cy: 125,
-    rx: 20,
-    ry: 14,
-    viewBoxCoords: { x: 30, y: 111, width: 40, height: 28 },
+    shapes: [
+      { svgElement: "ellipse", cx: 35, cy: 117, rx: 10, ry: 9 },
+      { svgElement: "ellipse", cx: 65, cy: 117, rx: 10, ry: 9 },
+    ],
+    viewBoxCoords: { x: 25, y: 108, width: 50, height: 18 },
   },
   quads: {
     id: "quads",
     name: "quads",
     label: "Quads",
-    svgElement: "ellipse",
-    cx: 50,
-    cy: 155,
-    rx: 16,
-    ry: 25,
-    viewBoxCoords: { x: 34, y: 130, width: 32, height: 50 },
+    shapes: [
+      { svgElement: "ellipse", cx: 35, cy: 150, rx: 9, ry: 25 },
+      { svgElement: "ellipse", cx: 65, cy: 150, rx: 9, ry: 25 },
+    ],
+    viewBoxCoords: { x: 26, y: 125, width: 48, height: 50 },
   },
   hamstrings: {
     id: "hamstrings",
     name: "hamstrings",
     label: "Hamstrings",
-    svgElement: "ellipse",
-    cx: 50,
-    cy: 160,
-    rx: 16,
-    ry: 22,
-    viewBoxCoords: { x: 34, y: 138, width: 32, height: 44 },
+    shapes: [
+      { svgElement: "ellipse", cx: 35, cy: 149, rx: 8, ry: 23 },
+      { svgElement: "ellipse", cx: 65, cy: 149, rx: 8, ry: 23 },
+    ],
+    viewBoxCoords: { x: 27, y: 126, width: 46, height: 46 },
   },
   calves: {
     id: "calves",
     name: "calves",
     label: "Calves",
-    svgElement: "ellipse",
-    cx: 50,
-    cy: 180,
-    rx: 12,
-    ry: 15,
-    viewBoxCoords: { x: 38, y: 165, width: 24, height: 30 },
+    shapes: [
+      { svgElement: "ellipse", cx: 35, cy: 193, rx: 6.5, ry: 14 },
+      { svgElement: "ellipse", cx: 65, cy: 193, rx: 6.5, ry: 14 },
+    ],
+    viewBoxCoords: { x: 28, y: 179, width: 44, height: 28 },
   },
 };
 
-/**
- * Agonist/Antagonist muscle pairs for imbalance detection
- * Maps opposing muscle groups that should maintain balance
- */
+// ── Agonist / antagonist pairs ────────────────────────────────────────────
+
 export interface MusclePair {
   pairType: "push_pull" | "leg_balance" | "arm_balance" | "shoulder_balance";
   label: string;
   primary: MuscleGroup;
   secondary: MuscleGroup;
-  recommendedRatio: number; // target ratio (primary / secondary)
+  recommendedRatio: number;
   severity: {
     mild: { min: number; max: number };
     moderate: { min: number; max: number };
@@ -251,7 +247,7 @@ export interface MusclePair {
 }
 
 export const MUSCLE_PAIRS: Record<string, MusclePair> = {
-  "push_pull": {
+  push_pull: {
     pairType: "push_pull",
     label: "Push vs Pull (Chest vs Back)",
     primary: "chest",
@@ -263,7 +259,7 @@ export const MUSCLE_PAIRS: Record<string, MusclePair> = {
       severe: { min: 0.3, max: 3.5 },
     },
   },
-  "leg_balance": {
+  leg_balance: {
     pairType: "leg_balance",
     label: "Leg Balance (Quads vs Hamstrings)",
     primary: "quads",
@@ -275,7 +271,7 @@ export const MUSCLE_PAIRS: Record<string, MusclePair> = {
       severe: { min: 0.3, max: 3.5 },
     },
   },
-  "arm_balance": {
+  arm_balance: {
     pairType: "arm_balance",
     label: "Arm Balance (Biceps vs Triceps)",
     primary: "biceps",
@@ -287,7 +283,7 @@ export const MUSCLE_PAIRS: Record<string, MusclePair> = {
       severe: { min: 0.3, max: 3.5 },
     },
   },
-  "shoulder_balance": {
+  shoulder_balance: {
     pairType: "shoulder_balance",
     label: "Shoulder Balance (Front vs Rear Delts)",
     primary: "front_delts",
@@ -301,77 +297,55 @@ export const MUSCLE_PAIRS: Record<string, MusclePair> = {
   },
 };
 
-/**
- * All visible body-map muscles in display order
- * Used for rendering bars, lists, and queries
- */
+/** All muscle groups in render order (back layers first) */
 export const BODY_MAP_MUSCLES: MuscleGroup[] = [
+  // Back-layer muscles (render first, appear behind front muscles)
+  "upper_back",
+  "lower_back",
+  "rear_delts",
+  "hamstrings",
+  // Mid-layer
+  "lats",
+  "traps",
+  "glutes",
+  // Front-layer muscles
   "chest",
   "upper_chest",
   "front_delts",
   "side_delts",
-  "rear_delts",
+  "core",
   "biceps",
   "triceps",
   "forearms",
-  "upper_back",
-  "lats",
-  "traps",
-  "lower_back",
-  "core",
-  "glutes",
   "quads",
-  "hamstrings",
   "calves",
 ];
 
-/**
- * Get muscle region by name
- */
 export function getMuscleRegion(muscleName: MuscleGroup): MuscleRegion | undefined {
   return MUSCLE_REGIONS[muscleName];
 }
 
-/**
- * Get all muscle pairs
- */
 export function getAllMusclePairs(): MusclePair[] {
   return Object.values(MUSCLE_PAIRS);
 }
 
-/**
- * Get pairs for a specific muscle (both as primary and secondary)
- */
 export function getPairsForMuscle(muscleName: MuscleGroup): MusclePair[] {
   return Object.values(MUSCLE_PAIRS).filter(
     (pair) => pair.primary === muscleName || pair.secondary === muscleName
   );
 }
 
-/**
- * Check if point (x, y) is within a muscle region (for hit detection)
- * Simple bounding box check based on viewBoxCoords
- */
-export function isMuscleRegionHit(
-  muscleName: MuscleGroup,
-  x: number,
-  y: number
-): boolean {
+export function isMuscleRegionHit(muscleName: MuscleGroup, x: number, y: number): boolean {
   const region = getMuscleRegion(muscleName);
   if (!region) return false;
-
-  const { x: regionX, y: regionY, width, height } = region.viewBoxCoords;
-  return x >= regionX && x <= regionX + width && y >= regionY && y <= regionY + height;
+  const { x: rx, y: ry, width, height } = region.viewBoxCoords;
+  return x >= rx && x <= rx + width && y >= ry && y <= ry + height;
 }
 
-/**
- * Find muscle at viewport coordinates
- * Requires SVG DOM element for coordinate transformation
- */
 export function findMuscleAtPoint(svgElement: SVGElement, x: number, y: number): MuscleGroup | null {
   const rect = svgElement.getBoundingClientRect();
-  const svgX = ((x - rect.left) / rect.width) * 100; // viewBox width is 100
-  const svgY = ((y - rect.top) / rect.height) * 200; // viewBox height is 200
+  const svgX = ((x - rect.left) / rect.width) * 100;
+  const svgY = ((y - rect.top) / rect.height) * 220;
 
   for (const muscleName of BODY_MAP_MUSCLES) {
     if (isMuscleRegionHit(muscleName as MuscleGroup, svgX, svgY)) {
@@ -381,9 +355,6 @@ export function findMuscleAtPoint(svgElement: SVGElement, x: number, y: number):
   return null;
 }
 
-/**
- * Map exercise muscles to agonist/antagonist pairs for quick lookups
- */
 export function getMuscleImbalancePair(muscleName: MuscleGroup): MusclePair | undefined {
   for (const pair of Object.values(MUSCLE_PAIRS)) {
     if (pair.primary === muscleName || pair.secondary === muscleName) {

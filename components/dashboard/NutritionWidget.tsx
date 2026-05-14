@@ -47,21 +47,28 @@ export default function NutritionWidget() {
   }, []);
 
   if (isLoading) {
-    return <div className="rounded-lg bg-gray-100 animate-pulse h-48" />;
+    return <div className="rounded-xl bg-muted animate-pulse h-48" />;
   }
 
   if (error || !goals || !summary) {
     return (
-      <div className="rounded-lg bg-amber-50 border border-amber-200 p-4">
-        <p className="text-sm text-amber-900">
-          {error || "Set up nutrition goals to track your daily intake"}
-        </p>
-        <a
-          href="/nutrition"
-          className="inline-block mt-2 px-3 py-1 bg-amber-600 hover:bg-amber-700 text-white text-sm font-medium rounded transition-colors"
-        >
-          Go to Nutrition
-        </a>
+      <div className="rounded-xl border border-border bg-card p-5">
+        <div className="flex items-start gap-3">
+          <div className="flex-1">
+            <p className="text-sm font-medium text-foreground mb-1">
+              Nutrition Tracking
+            </p>
+            <p className="text-sm text-muted-foreground mb-3">
+              Set up nutrition goals to track your daily intake
+            </p>
+            <a
+              href="/nutrition"
+              className="inline-block px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-medium rounded-lg transition-colors"
+            >
+              Set Up Nutrition
+            </a>
+          </div>
+        </div>
       </div>
     );
   }

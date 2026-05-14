@@ -57,21 +57,21 @@ export const ImbalanceSummary: React.FC<ImbalanceSummaryProps> = ({
       {imbalances.map((imbalance, idx) => (
         <div
           key={idx}
-          className="rounded-2xl border border-orange-200 dark:border-orange-900/30 bg-orange-50 dark:bg-orange-950/20 p-4 sm:p-6"
+          className="rounded-2xl border border-orange-300 dark:border-orange-700/50 bg-orange-50 dark:bg-orange-900/20 p-4 sm:p-6"
         >
           <div className="flex items-start gap-3">
             <AlertCircle className="w-5 h-5 text-orange-600 dark:text-orange-400 mt-0.5 flex-shrink-0" />
             <div className="flex-1">
-              <h3 className="font-semibold text-orange-900 dark:text-orange-100 mb-1">
+              <h3 className="font-semibold text-orange-900 dark:text-orange-200 mb-1">
                 {imbalance.pairLabel}
               </h3>
-              <div className="text-sm text-orange-800 dark:text-orange-200 mb-2 space-y-1">
+              <div className="text-sm text-orange-800 dark:text-orange-300 mb-2 space-y-1">
                 <p>
                   <span className="capitalize font-medium">{imbalance.severity}</span> imbalance
                   detected (Ratio: {imbalance.ratio.toFixed(2)}:1)
                 </p>
               </div>
-              <p className="text-sm text-orange-800 dark:text-orange-200">
+              <p className="text-sm text-orange-800 dark:text-orange-300">
                 {imbalance.recommendation}
               </p>
             </div>
@@ -81,8 +81,8 @@ export const ImbalanceSummary: React.FC<ImbalanceSummaryProps> = ({
 
       {/* Overworked Muscles */}
       {overworkedMuscles.length > 0 && (
-        <div className="rounded-2xl border border-red-200 dark:border-red-900/30 bg-red-50 dark:bg-red-950/20 p-4 sm:p-6">
-          <h3 className="font-semibold text-red-900 dark:text-red-100 mb-3 flex items-center gap-2">
+        <div className="rounded-2xl border border-red-300 dark:border-red-700/50 bg-red-50 dark:bg-red-900/20 p-4 sm:p-6">
+          <h3 className="font-semibold text-red-900 dark:text-red-200 mb-3 flex items-center gap-2">
             <TrendingDown className="w-5 h-5" />
             Overworked Muscles
           </h3>
@@ -95,7 +95,7 @@ export const ImbalanceSummary: React.FC<ImbalanceSummaryProps> = ({
               />
             ))}
           </div>
-          <p className="text-xs text-red-700 dark:text-red-300 mt-3">
+          <p className="text-xs text-red-700 dark:text-red-400 mt-3">
             These muscles show low recovery scores. Consider reducing volume or intensity until
             recovery improves.
           </p>
@@ -104,9 +104,9 @@ export const ImbalanceSummary: React.FC<ImbalanceSummaryProps> = ({
 
       {/* Undertrained Muscles */}
       {undertrainedMuscles.length > 0 && (
-        <div className="rounded-2xl border border-blue-200 dark:border-blue-900/30 bg-blue-50 dark:bg-blue-950/20 p-4 sm:p-6">
-          <h3 className="font-semibold text-blue-900 dark:text-blue-100 mb-3 flex items-center gap-2">
-            💪 Undertrained Muscles
+        <div className="rounded-2xl border border-blue-300 dark:border-blue-700/50 bg-blue-50 dark:bg-blue-900/20 p-4 sm:p-6">
+          <h3 className="font-semibold text-blue-900 dark:text-blue-200 mb-3 flex items-center gap-2">
+            Undertrained Muscles
           </h3>
           <div className="space-y-2">
             {undertrainedMuscles.map((muscle) => (
@@ -117,7 +117,7 @@ export const ImbalanceSummary: React.FC<ImbalanceSummaryProps> = ({
               />
             ))}
           </div>
-          <p className="text-xs text-blue-700 dark:text-blue-300 mt-3">
+          <p className="text-xs text-blue-700 dark:text-blue-400 mt-3">
             These muscles have low weekly volume. Consider adding more volume or frequency to
             stimulus growth.
           </p>
@@ -144,17 +144,17 @@ function OverworkedMuscleItem({
   const color = getMuscleFillColor(tier);
 
   return (
-    <div className="flex items-center justify-between p-2 rounded-lg bg-red-100 dark:bg-red-900/20">
+    <div className="flex items-center justify-between p-2 rounded-lg bg-red-100/70 dark:bg-red-800/25">
       <div className="flex items-center gap-2">
         <div
-          className="w-2.5 h-2.5 rounded-full"
+          className="w-2.5 h-2.5 rounded-full flex-shrink-0"
           style={{ backgroundColor: color }}
         />
-        <span className="text-sm font-medium text-red-900 dark:text-red-100">
+        <span className="text-sm font-medium text-red-900 dark:text-red-200">
           {region?.label}
         </span>
       </div>
-      <span className="text-xs text-red-700 dark:text-red-300">
+      <span className="text-xs text-red-700 dark:text-red-400">
         Recovery: {Math.round(recoveryScore)}%
       </span>
     </div>
@@ -176,12 +176,12 @@ function UndertrainedMuscleItem({
   const weeklyVolume = data?.weekly_volume ?? 0;
 
   return (
-    <div className="flex items-center justify-between p-2 rounded-lg bg-blue-100 dark:bg-blue-900/20">
-      <span className="text-sm font-medium text-blue-900 dark:text-blue-100">
+    <div className="flex items-center justify-between p-2 rounded-lg bg-blue-100/70 dark:bg-blue-800/25">
+      <span className="text-sm font-medium text-blue-900 dark:text-blue-200">
         {region?.label}
       </span>
-      <span className="text-xs text-blue-700 dark:text-blue-300">
-        Volume: {weeklyVolume} sets
+      <span className="text-xs text-blue-700 dark:text-blue-400">
+        {weeklyVolume} sets / week
       </span>
     </div>
   );

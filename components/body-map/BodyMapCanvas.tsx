@@ -1,19 +1,16 @@
 "use client";
 
-import React, { useRef, useState, useCallback } from "react";
-import { motion } from "framer-motion";
+import React, { useState, useCallback } from "react";
 import { BodyMapData, MuscleGroup } from "@/lib/recovery/types";
 import {
   MUSCLE_REGIONS,
   BODY_MAP_MUSCLES,
-  MuscleRegion,
+  MuscleShape,
 } from "@/lib/body-map/mapping";
 import {
   getMuscleFillColor,
   getFatigueOpacity,
-  getFatigueStrokeWidth,
   getRecoveryTier,
-  getGlowEffect,
 } from "@/lib/body-map/visualization";
 
 interface BodyMapCanvasProps {
@@ -23,39 +20,30 @@ interface BodyMapCanvasProps {
   selectedMuscle?: MuscleGroup | null;
 }
 
-interface MuscleState {
-  recoveryScore: number;
-  fatigueScore: number;
+function renderShape(shape: MuscleShape, props: Record<string, unknown>, key: number) {
+  switch (shape.svgElement) {
+    case "circle":
+      return <circle key={key} cx={shape.cx} cy={shape.cy} r={shape.r} {...(props as React.SVGProps<SVGCircleElement>)} />;
+    case "ellipse":
+      return <ellipse key={key} cx={shape.cx} cy={shape.cy} rx={shape.rx} ry={shape.ry} {...(props as React.SVGProps<SVGEllipseElement>)} />;
+    case "polygon":
+      return <polygon key={key} points={shape.points} {...(props as React.SVGProps<SVGPolygonElement>)} />;
+    case "path":
+      return <path key={key} d={shape.d} {...(props as React.SVGProps<SVGPathElement>)} />;
+    case "rect":
+      return <rect key={key} x={shape.x} y={shape.y} width={shape.width} height={shape.height} {...(props as React.SVGProps<SVGRectElement>)} />;
+    default:
+      return null;
+  }
 }
 
-/**
- * Minimalist geometric front-body silhouette SVG
- * Viewbox: 0 0 100 200 (front-facing, anatomically proportioned)
- * Interactive: hoverable and clickable muscle regions
- * Colors: Green/Yellow/Orange/Red based on recovery tier
- */
 export const BodyMapCanvas: React.FC<BodyMapCanvasProps> = ({
   muscleData,
   onMuscleClick,
   onMuscleHover,
   selectedMuscle,
 }) => {
-  const svgRef = useRef<SVGSVGElement>(null);
   const [hoveredMuscle, setHoveredMuscle] = useState<MuscleGroup | null>(null);
-
-  const getMuscleState = useCallback(
-    (muscle: MuscleGroup): MuscleState => {
-      const data = muscleData[muscle];
-      if (!data) {
-        return { recoveryScore: 0, fatigueScore: 100 };
-      }
-      return {
-        recoveryScore: data.recovery_score ?? 0,
-        fatigueScore: data.fatigue_score ?? 100,
-      };
-    },
-    [muscleData]
-  );
 
   const handleMouseEnter = useCallback(
     (muscle: MuscleGroup) => {
@@ -70,139 +58,90 @@ export const BodyMapCanvas: React.FC<BodyMapCanvasProps> = ({
     onMuscleHover?.(null);
   }, [onMuscleHover]);
 
-  const handleClick = useCallback(
-    (muscle: MuscleGroup) => {
-      onMuscleClick(muscle);
-    },
-    [onMuscleClick]
-  );
-
   const renderMuscleRegion = (muscle: MuscleGroup): React.ReactNode => {
     const region = MUSCLE_REGIONS[muscle];
     if (!region) return null;
 
-    const state = getMuscleState(muscle);
-    const tier = getRecoveryTier(state.recoveryScore);
+    const data = muscleData[muscle];
+    const hasData = !!data;
+    const recoveryScore = data?.recovery_score ?? 100;
+    const fatigueScore = data?.fatigue_score ?? 0;
+
+    const tier = hasData ? getRecoveryTier(recoveryScore) : "gray";
     const fillColor = getMuscleFillColor(tier);
-    const opacity = getFatigueOpacity(state.fatigueScore);
-    const strokeWidth = getFatigueStrokeWidth(state.fatigueScore);
-    const glowEffect = getGlowEffect(state.fatigueScore, tier);
+    const baseOpacity = hasData ? getFatigueOpacity(fatigueScore) : 0.45;
+
     const isHovered = hoveredMuscle === muscle;
     const isSelected = selectedMuscle === muscle;
+    const opacity = isHovered ? Math.min(baseOpacity + 0.2, 1) : baseOpacity;
 
-    const commonProps = {
-      key: region.id,
+    const shapeProps: Record<string, unknown> = {
       fill: fillColor,
-      stroke: fillColor,
-      strokeWidth,
       opacity,
-      className: "cursor-pointer transition-all duration-300",
+      stroke: isSelected ? "#ffffff" : isHovered ? fillColor : "none",
+      strokeWidth: isSelected ? 1 : isHovered ? 0.5 : 0,
+      className: "cursor-pointer transition-opacity duration-150",
       onMouseEnter: () => handleMouseEnter(muscle),
       onMouseLeave: handleMouseLeave,
-      onClick: () => handleClick(muscle),
+      onClick: () => onMuscleClick(muscle),
     };
 
-    // Base variants for Framer Motion
-    const baseVariants = {
-      initial: { scale: 1 },
-      hover: { scale: 1.08 },
-    };
-
-    const element = (
-      <motion.g
-        key={region.id}
-        initial="initial"
-        animate={isHovered ? "hover" : "initial"}
-        variants={baseVariants}
-        transition={{ duration: 0.2, type: "spring", stiffness: 300 }}
-      >
-        {region.svgElement === "circle" && (
-          <circle
-            cx={region.cx}
-            cy={region.cy}
-            r={region.r}
-            {...commonProps}
-            style={isHovered ? { opacity: opacity + 0.15 } : undefined}
-          />
-        )}
-
-        {region.svgElement === "ellipse" && (
-          <ellipse
-            cx={region.cx}
-            cy={region.cy}
-            rx={region.rx}
-            ry={region.ry}
-            {...commonProps}
-            style={isHovered ? { opacity: opacity + 0.15 } : undefined}
-          />
-        )}
-
-        {region.svgElement === "polygon" && (
-          <polygon
-            points={region.points}
-            {...commonProps}
-            style={isHovered ? { opacity: opacity + 0.15 } : undefined}
-          />
-        )}
-
-        {region.svgElement === "path" && (
-          <path
-            d={region.d}
-            {...commonProps}
-            style={isHovered ? { opacity: opacity + 0.15 } : undefined}
-          />
-        )}
-
-        {region.svgElement === "rect" && (
-          <rect
-            x={region.x}
-            y={region.y}
-            width={region.width}
-            height={region.height}
-            {...commonProps}
-            style={isHovered ? { opacity: opacity + 0.15 } : undefined}
-          />
-        )}
-      </motion.g>
+    return (
+      <g key={region.id}>
+        {region.shapes.map((shape, idx) => renderShape(shape, shapeProps, idx))}
+      </g>
     );
-
-    return element;
   };
 
   return (
-    <div className="flex justify-center items-center w-full">
+    <div className="flex justify-center items-center w-full py-4">
       <svg
-        ref={svgRef}
-        viewBox="0 0 100 200"
-        className="w-full max-w-xs h-auto sm:max-w-sm md:max-w-md"
-        style={{ maxHeight: "600px" }}
+        viewBox="0 0 100 220"
+        className="w-full max-w-[180px] sm:max-w-[220px] md:max-w-[260px] h-auto"
         xmlns="http://www.w3.org/2000/svg"
-        aria-label="Body muscle map"
+        aria-label="Body muscle map — click a muscle for details"
       >
-        {/* SVG definitions for potential future use (filters, masks, etc.) */}
-        <defs>
-          {/* Subtle radial gradient for depth (optional) */}
-          <radialGradient id="muscleGradient" cx="50%" cy="50%" r="60%">
-            <stop offset="0%" stopOpacity="0.1" />
-            <stop offset="100%" stopOpacity="0" />
-          </radialGradient>
-        </defs>
-
-        {/* Render all muscles in order */}
-        <g id="bodyMap">
-          {BODY_MAP_MUSCLES.map((muscle) => renderMuscleRegion(muscle as MuscleGroup))}
+        {/* ── Body silhouette ─────────────────────────────────────────── */}
+        <g className="fill-slate-300 dark:fill-slate-600" stroke="none">
+          {/* Head */}
+          <circle cx="50" cy="10" r="8.5" />
+          {/* Neck */}
+          <rect x="46" y="18" width="8" height="9" />
+          {/* Torso — shoulder-wide at top, tapers to waist, flares slightly at hips */}
+          <path d="M 16,27 L 84,27 L 80,62 L 72,90 L 74,112 L 26,112 L 28,90 L 20,62 Z" />
+          {/* Left upper arm */}
+          <path d="M 10,27 L 19,27 L 18,86 L 10,86 Z" />
+          {/* Right upper arm */}
+          <path d="M 81,27 L 90,27 L 90,86 L 82,86 Z" />
+          {/* Left forearm */}
+          <path d="M 10,85 L 18,85 L 17,130 L 10,130 Z" />
+          {/* Right forearm */}
+          <path d="M 82,85 L 90,85 L 90,130 L 83,130 Z" />
+          {/* Left thigh */}
+          <path d="M 26,112 L 44,112 L 44,174 L 28,174 Z" />
+          {/* Right thigh */}
+          <path d="M 56,112 L 74,112 L 72,174 L 56,174 Z" />
+          {/* Left calf */}
+          <path d="M 28,173 L 44,173 L 43,215 L 30,215 Z" />
+          {/* Right calf */}
+          <path d="M 56,173 L 72,173 L 70,215 L 57,215 Z" />
         </g>
 
-        {/* Subtle outline/border for context (optional head, etc.) */}
-        {/* Can be enhanced later with more anatomical context */}
+        {/* ── Muscle overlays ─────────────────────────────────────────── */}
+        <g>
+          {BODY_MAP_MUSCLES.map((muscle) =>
+            renderMuscleRegion(muscle as MuscleGroup)
+          )}
+        </g>
       </svg>
 
-      {/* Legend below SVG */}
-      <style jsx>{`
-        svg {
-          filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.05));
-        }
-      `}</style>
+      {/* Recovery colour legend */}
+      <div className="hidden" aria-hidden="true">
+        <span style={{ color: "#22C55E" }}>Green = full recovery</span>
+        <span style={{ color: "#F59E0B" }}>Yellow = moderate fatigue</span>
+        <span style={{ color: "#F97316" }}>Orange = high fatigue</span>
+        <span style={{ color: "#EF4444" }}>Red = overloaded</span>
+      </div>
     </div>
   );
 };
