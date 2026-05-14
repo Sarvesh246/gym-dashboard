@@ -1,162 +1,210 @@
-import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
-import { PageContainer } from "@/components/layout/PageContainer";
-import { SectionContainer } from "@/components/layout/SectionContainer";
-import { SectionCard } from "@/components/ui/SectionCard";
-import { MetricCard } from "@/components/ui/MetricCard";
-import { EmptyState } from "@/components/ui/EmptyState";
-import { ChartPlaceholder } from "@/components/ui/ChartPlaceholder";
-import { Progress } from "@/components/ui/progress";
-import { mockMetrics, mockCalorieData } from "@/lib/mock-data";
-import { Apple, Flame, Droplets, Plus, UtensilsCrossed } from "lucide-react";
+"use client";
 
-const macros = [
-  { label: "Protein", value: 142, goal: 180, unit: "g", color: "bg-warning" },
-  { label: "Carbs", value: 198, goal: 260, unit: "g", color: "bg-primary" },
-  { label: "Fat", value: 48, goal: 70, unit: "g", color: "bg-success" },
-];
+import { useEffect, useState } from "react";
+import { DailyNutritionSummary, NutritionGoals, NutritionLog } from "@/lib/nutrition/types";
+import MacroRings from "@/components/nutrition/MacroRings";
+import MealTimeline from "@/components/nutrition/MealTimeline";
+import FoodLogger from "@/components/nutrition/FoodLogger";
+import BarcodeScanner from "@/components/nutrition/BarcodeScanner";
 
-const waterLog = { consumed: 1.8, goal: 3.0, unit: "L" };
+export default function NutritionPage() {
+  const [summary, setSummary] = useState<DailyNutritionSummary | null>(null);
+  const [goals, setGoals] = useState<NutritionGoals | null>(null);
+  const [logs, setLogs] = useState<NutritionLog[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loggerOpen, setLoggerOpen] = useState(false);
+  const [scannerOpen, setScannerOpen] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split("T")[0]);
 
-export default async function NutritionPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  useEffect(() => {
+    const loadData = async () => {
+      setIsLoading(true);
+      try {
+        const goalsRes = await fetch("/api/nutrition/goals");
+        if (goalsRes.ok) {
+          const goalsData = await goalsRes.json();
+          setGoals(goalsData.goals);
+        }
 
-  const calorieProgress = Math.round(
-    (mockMetrics.calories.consumed / mockMetrics.calories.total) * 100
-  );
+        const logsRes = await fetch(`/api/nutrition/logs?date=${selectedDate}`);
+        if (logsRes.ok) {
+          const logsData = await logsRes.json();
+          setLogs(logsData.logs || []);
+          setSummary(logsData.summary);
+        }
+      } catch (error) {
+        console.error("Load nutrition data error:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadData();
+  }, [selectedDate]);
+
+  const handleDeleteLog = async (logId: string) => {
+    if (!confirm("Delete this food entry?")) return;
+
+    try {
+      const response = await fetch(`/api/nutrition/logs/${logId}`, {
+        method: "DELETE",
+      });
+
+      if (response.ok) {
+        setLogs(logs.filter((log) => log.id !== logId));
+      }
+    } catch (error) {
+      console.error("Delete log error:", error);
+    }
+  };
+
+  const handleLogSuccess = () => {
+    const reloadData = async () => {
+      const logsRes = await fetch(`/api/nutrition/logs?date=${selectedDate}`);
+      if (logsRes.ok) {
+        const logsData = await logsRes.json();
+        setLogs(logsData.logs || []);
+        setSummary(logsData.summary);
+      }
+    };
+    reloadData();
+  };
+
+  const today = new Date().toISOString().split("T")[0];
+  const isToday = selectedDate === today;
 
   return (
-    <PageContainer>
-      {/* Header */}
-      <SectionContainer className="mb-6">
-        <h1 className="text-2xl font-bold text-foreground tracking-tight">Nutrition</h1>
-        <p className="text-sm text-muted-foreground mt-1">Track your fuel</p>
-      </SectionContainer>
-
-      {/* Calorie Overview */}
-      <SectionContainer title="Today's Calories">
-        <div className="grid grid-cols-3 gap-3">
-          <MetricCard
-            label="Consumed"
-            value={mockMetrics.calories.consumed}
-            unit="kcal"
-            icon="Flame"
-            color="warning"
-            animateValue
-          />
-          <MetricCard
-            label="Remaining"
-            value={mockMetrics.calories.remaining}
-            unit="kcal"
-            icon="Apple"
-            color="success"
-            animateValue
-          />
-          <MetricCard
-            label="Goal"
-            value={mockMetrics.calories.total}
-            unit="kcal"
-            icon="Flame"
-            color="neutral"
-            animateValue
-          />
+    <div className="min-h-screen bg-gray-50">
+      <div className="bg-white border-b border-gray-200 sticky top-0 z-40">
+        <div className="max-w-2xl mx-auto px-4 py-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">Nutrition</h1>
+              <p className="text-sm text-gray-600 mt-1">
+                {new Date(selectedDate).toLocaleDateString("en-US", {
+                  weekday: "long",
+                  month: "short",
+                  day: "numeric",
+                })}
+              </p>
+            </div>
+            <button
+              onClick={() => setSelectedDate(today)}
+              className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
+                isToday
+                  ? "bg-emerald-600 text-white"
+                  : "bg-gray-200 text-gray-900 hover:bg-gray-300"
+              }`}
+            >
+              Today
+            </button>
+          </div>
         </div>
-      </SectionContainer>
-
-      {/* Macros */}
-      <SectionContainer>
-        <SectionCard title="Macronutrients" subtitle="Daily breakdown">
-          <div className="space-y-4">
-            {macros.map((macro) => {
-              const pct = Math.round((macro.value / macro.goal) * 100);
-              return (
-                <div key={macro.label}>
-                  <div className="flex justify-between items-baseline mb-1.5">
-                    <span className="text-sm font-medium text-foreground">{macro.label}</span>
-                    <span className="text-xs text-muted-foreground">
-                      {macro.value}{macro.unit} / {macro.goal}{macro.unit}
-                    </span>
-                  </div>
-                  <Progress value={pct} className="h-2" />
-                  <p className="text-xs text-muted-foreground mt-0.5">{pct}% of goal</p>
-                </div>
-              );
-            })}
-          </div>
-        </SectionCard>
-      </SectionContainer>
-
-      {/* Calorie Trend + Water */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 mb-8">
-        <SectionCard title="7-Day Calorie Trend" padding={false}>
-          <div className="px-5 pb-5 pt-1">
-            <ChartPlaceholder
-              type="bar"
-              data={mockCalorieData}
-              dataKey="consumed"
-              color="warning"
-              height={130}
-              showXAxis
-            />
-          </div>
-        </SectionCard>
-
-        <SectionCard title="Water Intake" subtitle="Daily hydration">
-          <div className="flex flex-col items-center justify-center py-4 gap-4">
-            <div className="relative w-28 h-28">
-              <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
-                <circle cx="50" cy="50" r="42" fill="none" stroke="var(--muted)" strokeWidth="8" />
-                <circle
-                  cx="50" cy="50" r="42" fill="none"
-                  stroke="#3B82F6" strokeWidth="8"
-                  strokeDasharray={`${2 * Math.PI * 42}`}
-                  strokeDashoffset={`${2 * Math.PI * 42 * (1 - waterLog.consumed / waterLog.goal)}`}
-                  strokeLinecap="round"
-                />
-              </svg>
-              <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <Droplets size={18} className="text-primary mb-0.5" />
-                <span className="text-lg font-bold text-foreground">{waterLog.consumed}L</span>
-                <span className="text-xs text-muted-foreground">of {waterLog.goal}L</span>
-              </div>
-            </div>
-            <div className="flex gap-2 flex-wrap justify-center">
-              {[250, 500].map((ml) => (
-                <button
-                  key={ml}
-                  className="rounded-xl border border-border bg-muted px-3 py-1.5 text-xs font-medium text-foreground hover:bg-accent transition-colors"
-                >
-                  +{ml}ml
-                </button>
-              ))}
-            </div>
-          </div>
-        </SectionCard>
       </div>
 
-      {/* Meal Log */}
-      <SectionContainer>
-        <SectionCard
-          title="Meal Log"
-          subtitle="Today"
-          action={
-            <button className="inline-flex items-center gap-1 rounded-xl bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-colors">
-              <Plus size={12} />
-              Add meal
-            </button>
+      <div className="max-w-2xl mx-auto px-4 py-6 sm:px-6 lg:px-8 space-y-6">
+        {isLoading ? (
+          <div className="flex items-center justify-center py-12">
+            <div className="animate-spin w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full" />
+          </div>
+        ) : summary && goals ? (
+          <>
+            <div className="bg-white rounded-lg border border-gray-200 p-6">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">Progress</h2>
+              <div className="flex justify-center">
+                <MacroRings summary={summary} goals={goals} size="lg" />
+              </div>
+
+              <div className="grid grid-cols-4 gap-3 mt-6 pt-6 border-t border-gray-200">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-gray-900">
+                    {Math.round(summary.calories)}
+                  </div>
+                  <div className="text-xs text-gray-600 mt-1">of {goals.calorie_target} kcal</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-amber-700">
+                    {Math.round(summary.protein_g)}g
+                  </div>
+                  <div className="text-xs text-gray-600 mt-1">of {Math.round(goals.protein_target)}g</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-blue-700">
+                    {Math.round(summary.carbs_g)}g
+                  </div>
+                  <div className="text-xs text-gray-600 mt-1">of {Math.round(goals.carb_target)}g</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-orange-700">
+                    {Math.round(summary.fat_g)}g
+                  </div>
+                  <div className="text-xs text-gray-600 mt-1">of {Math.round(goals.fat_target)}g</div>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setLoggerOpen(true)}
+                className="flex-1 px-4 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-lg transition-colors"
+              >
+                + Log Food
+              </button>
+              <button
+                onClick={() => setScannerOpen(true)}
+                className="flex-1 px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors"
+              >
+                📷 Scan
+              </button>
+            </div>
+
+            <div className="bg-white rounded-lg border border-gray-200 p-6">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">Meals</h2>
+              <MealTimeline logs={logs} onDeleteLog={handleDeleteLog} />
+            </div>
+          </>
+        ) : (
+          <div className="bg-white rounded-lg border border-gray-200 p-8 text-center">
+            <p className="text-gray-600 mb-4">Set up your nutrition goals to get started</p>
+            <a
+              href="/nutrition/setup"
+              className="inline-block px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-lg transition-colors"
+            >
+              Set Goals
+            </a>
+          </div>
+        )}
+      </div>
+
+      <FoodLogger
+        isOpen={loggerOpen}
+        onClose={() => setLoggerOpen(false)}
+        onLogSuccess={handleLogSuccess}
+      />
+
+      <BarcodeScanner
+        isOpen={scannerOpen}
+        onClose={() => setScannerOpen(false)}
+        onScan={async (barcode) => {
+          try {
+            const response = await fetch("/api/foods/barcode", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ barcode_string: barcode }),
+            });
+
+            if (response.ok) {
+              setScannerOpen(false);
+              handleLogSuccess();
+            } else {
+              alert("Food not found");
+            }
+          } catch (error) {
+            console.error("Barcode scan error:", error);
+            alert("Failed to scan barcode");
           }
-        >
-          <EmptyState
-            icon={UtensilsCrossed}
-            title="No meals logged yet"
-            description="Start logging your meals to track your daily nutrition intake."
-          />
-        </SectionCard>
-      </SectionContainer>
-    </PageContainer>
+        }}
+      />
+    </div>
   );
 }

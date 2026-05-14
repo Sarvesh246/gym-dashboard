@@ -161,6 +161,13 @@ create table if not exists wger_exercises (
   created_at            timestamptz default now()
 );
 
+alter table wger_exercises enable row level security;
+
+create policy "public exercise catalog read-only"
+  on wger_exercises for select
+  to authenticated
+  using (true);
+
 create index if not exists idx_wger_exercises_name on wger_exercises(name);
 create index if not exists idx_wger_exercises_muscles on wger_exercises using gin(muscle_ids);
 create index if not exists idx_wger_exercises_synced_at on wger_exercises(synced_at);

@@ -7,7 +7,9 @@ import {
 import { updateAllExercisePerformances } from "@/services/performance";
 import { persistStrainLog, upsertSystemicRecovery, getSystemicRecovery } from "@/services/recovery";
 import { applyWorkoutStrainToMuscles, getMuscleStates } from "@/services/muscles";
+import { getWeeklyAdherenceStats } from "@/services/nutrition";
 import { calculateWorkoutStrain } from "@/lib/recovery/scoring";
+import { calculateRecoveryModifier } from "@/services/macros";
 import { buildSessionMetrics } from "@/lib/training/volume";
 import type { WorkoutSet } from "@/lib/recovery/types";
 import type { LoggedSet } from "@/lib/training/types";
@@ -131,6 +133,18 @@ export async function PATCH(
           applyWorkoutStrainToMuscles(user.id, strain.local_muscle_loads, finishedAt),
         ]);
 
+        // Fetch nutrition adherence and calculate recovery modifier
+        let nutritionModifier = 0;
+        try {
+          const weeklyAdherence = await getWeeklyAdherenceStats(user.id);
+          if (weeklyAdherence) {
+            nutritionModifier = calculateRecoveryModifier(weeklyAdherence);
+          }
+        } catch (nutritionErr) {
+          // Nutrition data may not exist yet; continue without it
+          console.log("Nutrition data not available for recovery modifier");
+        }
+
         // Update systemic fatigue
         const existing = await getSystemicRecovery(user.id);
         const newAccumulation = Math.min(
@@ -141,6 +155,7 @@ export async function PATCH(
           systemic_fatigue:     Math.min(100, (existing?.systemic_fatigue ?? 0) + strain.systemic_load * 0.3),
           strain_accumulation:  newAccumulation,
           recovery_tier:        existing?.recovery_tier ?? "green",
+          nutrient_modifier:    nutritionModifier,
         });
       }
     }

@@ -69,6 +69,7 @@ export interface SystemicRecovery {
   strain_accumulation: number; // rolling 7-day strain
   recovery_trend: number;      // −10 to +10
   recovery_tier: RecoveryTier;
+  nutrient_modifier?: number;  // −10 to +5 (from nutrition adherence)
   updated_at: string;
 }
 

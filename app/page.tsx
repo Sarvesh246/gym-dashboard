@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import React from "react";
+import dynamic from "next/dynamic";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { SectionContainer } from "@/components/layout/SectionContainer";
 import { SectionCard } from "@/components/ui/SectionCard";
@@ -24,6 +25,11 @@ import {
   TrendingUp,
   Clock,
 } from "lucide-react";
+
+// Lazy load nutrition widget (client component with data fetching)
+const NutritionWidget = dynamic(() => import("@/components/dashboard/NutritionWidget"), {
+  loading: () => <div className="rounded-lg bg-gray-100 animate-pulse h-48" />,
+});
 
 function getGreeting() {
   const hour = new Date().getHours();
@@ -91,6 +97,11 @@ export default async function DashboardPage() {
       {/* Hero Metrics */}
       <SectionContainer title="Today's Overview">
         <MetricsOverview metrics={mockMetrics} />
+      </SectionContainer>
+
+      {/* Nutrition Widget */}
+      <SectionContainer title="Nutrition">
+        <NutritionWidget />
       </SectionContainer>
 
       {/* Charts Grid */}
