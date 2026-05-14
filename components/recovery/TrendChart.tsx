@@ -1,7 +1,7 @@
 "use client";
 
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from "recharts";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { SectionCard } from "@/components/ui/SectionCard";
 import type { RecoverySnapshot } from "@/services/readiness";
 
 interface TrendChartProps {
@@ -37,12 +37,8 @@ export function TrendChart({ snapshots, title = "Readiness Trend", description =
   const avgReadiness = data.length > 0 ? Math.round(data.reduce((sum, d) => sum + d.readiness, 0) / data.length) : 0;
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-base">{title}</CardTitle>
-        <CardDescription>{description}</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
+    <SectionCard title={title} subtitle={description}>
+      <div className="space-y-4">
         <div className="h-48">
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={data} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
@@ -88,7 +84,7 @@ export function TrendChart({ snapshots, title = "Readiness Trend", description =
             <p className="font-semibold">{Math.min(...data.map((d) => d.readiness))}/100</p>
           </div>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </SectionCard>
   );
 }

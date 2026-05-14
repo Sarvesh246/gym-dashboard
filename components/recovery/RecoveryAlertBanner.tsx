@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { AlertTriangle, AlertCircle, Info, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import type { RecoveryAlert } from "@/services/alerts";
 
 interface RecoveryAlertBannerProps {
@@ -64,7 +63,7 @@ export function RecoveryAlertBanner({ alerts, onDismiss }: RecoveryAlertBannerPr
               : "text-blue-600 dark:text-blue-400";
 
         return (
-          <Card key={alert.id} className={`border ${bgColor} p-3`}>
+          <div key={alert.id} className={`rounded-lg border ${bgColor} p-3`}>
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-start gap-2 flex-1">
                 <div className={`mt-0.5 ${iconColor}`}>{icon}</div>
@@ -87,7 +86,7 @@ export function RecoveryAlertBanner({ alerts, onDismiss }: RecoveryAlertBannerPr
                 <X className="h-4 w-4" />
               </Button>
             </div>
-          </Card>
+          </div>
         );
       })}
     </div>

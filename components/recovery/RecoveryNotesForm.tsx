@@ -2,8 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Slider } from "@/components/ui/slider";
+import { SectionCard } from "@/components/ui/SectionCard";
 import {
   Select,
   SelectContent,
@@ -11,9 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
 
 const MUSCLE_GROUPS = [
   "chest",
@@ -85,13 +82,8 @@ export function RecoveryNotesForm({ onSubmit, isLoading = false }: RecoveryNotes
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Recovery Notes</CardTitle>
-        <CardDescription>Log muscle soreness, injuries, or movement restrictions</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-5">
+    <SectionCard title="Recovery Notes" subtitle="Log muscle soreness, injuries, or movement restrictions">
+      <form onSubmit={handleSubmit} className="space-y-5">
           {/* Muscle Group Select */}
           <div className="space-y-2">
             <Label htmlFor="muscle-group" className="text-sm font-medium">
@@ -116,13 +108,14 @@ export function RecoveryNotesForm({ onSubmit, isLoading = false }: RecoveryNotes
             <Label htmlFor="soreness" className="text-sm font-medium">
               Soreness Level: {sorenessLevel}/10
             </Label>
-            <Slider
+            <input
               id="soreness"
+              type="range"
               min={1}
               max={10}
               step={1}
-              value={[sorenessLevel]}
-              onValueChange={(val) => setSorenessLevel(val[0])}
+              value={sorenessLevel}
+              onChange={(e) => setSorenessLevel(parseInt(e.target.value))}
               className="w-full"
             />
             <p className="text-xs text-muted-foreground">
@@ -151,21 +144,23 @@ export function RecoveryNotesForm({ onSubmit, isLoading = false }: RecoveryNotes
             <Label htmlFor="notes" className="text-sm font-medium">
               Notes (optional)
             </Label>
-            <Textarea
+            <textarea
               id="notes"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               placeholder="E.g., 'tight after deadlifts', 'rolling helps', 'improved with stretching'"
-              className="min-h-24 resize-none"
+              className="w-full min-h-24 resize-none rounded border border-input bg-background px-3 py-2 text-sm placeholder-muted-foreground"
             />
           </div>
 
           {/* Is Injury Checkbox */}
           <div className="flex items-center space-x-2 border-t pt-4">
-            <Checkbox
+            <input
               id="is-injury"
+              type="checkbox"
               checked={isInjury}
-              onCheckedChange={(checked) => setIsInjury(checked as boolean)}
+              onChange={(e) => setIsInjury(e.target.checked)}
+              className="w-4 h-4 rounded border border-input cursor-pointer"
             />
             <Label htmlFor="is-injury" className="text-sm font-medium cursor-pointer">
               Flag as Injury (suppresses readiness)
@@ -189,7 +184,6 @@ export function RecoveryNotesForm({ onSubmit, isLoading = false }: RecoveryNotes
             {isLoading ? "Saving..." : "Save Recovery Notes"}
           </Button>
         </form>
-      </CardContent>
-    </Card>
+    </SectionCard>
   );
 }

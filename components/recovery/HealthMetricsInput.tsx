@@ -2,8 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Slider } from "@/components/ui/slider";
+import { SectionCard } from "@/components/ui/SectionCard";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { HealthMetricsInput } from "@/services/health";
@@ -48,13 +47,8 @@ export function HealthMetricsInput({ onSubmit, isLoading = false }: HealthMetric
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Daily Health Log</CardTitle>
-        <CardDescription>Track your sleep, stress, and biometric data to improve recovery scoring</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-6">
+    <SectionCard title="Daily Health Log" subtitle="Track your sleep, stress, and biometric data to improve recovery scoring">
+      <form onSubmit={handleSubmit} className="space-y-6">
           {/* Sleep Hours */}
           <div className="space-y-2">
             <Label htmlFor="sleep-hours" className="text-sm font-medium">
@@ -79,13 +73,14 @@ export function HealthMetricsInput({ onSubmit, isLoading = false }: HealthMetric
             <Label htmlFor="sleep-quality" className="text-sm font-medium">
               Sleep Quality: {sleepQuality}/10
             </Label>
-            <Slider
+            <input
               id="sleep-quality"
+              type="range"
               min={1}
               max={10}
               step={1}
-              value={[sleepQuality]}
-              onValueChange={(val) => setSleepQuality(val[0])}
+              value={sleepQuality}
+              onChange={(e) => setSleepQuality(parseInt(e.target.value))}
               className="w-full"
             />
             <p className="text-xs text-muted-foreground">
@@ -98,13 +93,14 @@ export function HealthMetricsInput({ onSubmit, isLoading = false }: HealthMetric
             <Label htmlFor="stress-level" className="text-sm font-medium">
               Stress Level: {stressLevel}/10
             </Label>
-            <Slider
+            <input
               id="stress-level"
+              type="range"
               min={1}
               max={10}
               step={1}
-              value={[stressLevel]}
-              onValueChange={(val) => setStressLevel(val[0])}
+              value={stressLevel}
+              onChange={(e) => setStressLevel(parseInt(e.target.value))}
               className="w-full"
             />
             <p className="text-xs text-muted-foreground">
@@ -136,13 +132,14 @@ export function HealthMetricsInput({ onSubmit, isLoading = false }: HealthMetric
             <Label htmlFor="hydration-score" className="text-sm font-medium">
               Hydration Score: {hydrationScore}/100
             </Label>
-            <Slider
+            <input
               id="hydration-score"
+              type="range"
               min={0}
               max={100}
               step={10}
-              value={[hydrationScore]}
-              onValueChange={(val) => setHydrationScore(val[0])}
+              value={hydrationScore}
+              onChange={(e) => setHydrationScore(parseInt(e.target.value))}
               className="w-full"
             />
             <p className="text-xs text-muted-foreground">Rate your daily hydration intake</p>
@@ -159,7 +156,6 @@ export function HealthMetricsInput({ onSubmit, isLoading = false }: HealthMetric
             {isLoading ? "Saving..." : "Save Health Metrics"}
           </Button>
         </form>
-      </CardContent>
-    </Card>
+    </SectionCard>
   );
 }

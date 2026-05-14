@@ -1,7 +1,7 @@
 "use client";
 
 import { Calendar, TrendingDown, AlertCircle } from "lucide-react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { SectionCard } from "@/components/ui/SectionCard";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 
@@ -29,26 +29,27 @@ export function PeriodizationCard({
   const strainPercentage = Math.min(100, (weeklyStrain7d / 500) * 100);
   const formatDate = (dateStr: string) => new Date(dateStr).toLocaleDateString("en-US", { month: "short", day: "numeric" });
 
-  return (
-    <Card className={deloadRecommended ? "border-yellow-200 dark:border-yellow-800 bg-yellow-50 dark:bg-yellow-950/20" : ""}>
-      <CardHeader>
-        <div className="flex items-start justify-between">
-          <div>
-            <CardTitle className="flex items-center gap-2">
-              <TrendingDown className="h-5 w-5" />
-              Periodization Plan
-            </CardTitle>
-            <CardDescription>Training load and deload recommendations</CardDescription>
-          </div>
-          {deloadRecommended && (
-            <Badge variant="outline" className="bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-100">
-              Deload Recommended
-            </Badge>
-          )}
-        </div>
-      </CardHeader>
+  const titleContent = (
+    <div className="flex items-center gap-2">
+      <TrendingDown className="h-5 w-5" />
+      Periodization Plan
+    </div>
+  );
 
-      <CardContent className="space-y-4">
+  const actionContent = deloadRecommended && (
+    <Badge variant="outline" className="bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-100">
+      Deload Recommended
+    </Badge>
+  );
+
+  return (
+    <SectionCard
+      title="Periodization Plan"
+      subtitle="Training load and deload recommendations"
+      action={actionContent}
+      className={deloadRecommended ? "border-yellow-200 dark:border-yellow-800 bg-yellow-50 dark:bg-yellow-950/20" : ""}
+    >
+      <div className="space-y-4">
         {/* Strain gauge */}
         <div className="space-y-2">
           <div className="flex items-center justify-between text-sm">
@@ -117,7 +118,7 @@ export function PeriodizationCard({
             </div>
           </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </SectionCard>
   );
 }
