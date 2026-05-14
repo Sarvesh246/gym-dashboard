@@ -171,23 +171,81 @@ export function BodyMapPageClient() {
 
         {/* Body Map Canvas */}
         <SectionCard title="Your Muscles">
-          <div className="flex justify-center">
-            <BodyMapCanvas
-              muscleData={data.muscleData}
-              onMuscleClick={handleMuscleClick}
-              onMuscleHover={setHoveredMuscle}
-              selectedMuscle={selectedMuscle}
-            />
-          </div>
+          <div className="relative">
+            <div className="flex justify-center">
+              <BodyMapCanvas
+                muscleData={data.muscleData}
+                onMuscleClick={handleMuscleClick}
+                onMuscleHover={setHoveredMuscle}
+                selectedMuscle={selectedMuscle}
+              />
+            </div>
 
-          {/* Hover Tooltip */}
-          {hoveredMuscle && (
-            <MuscleTooltip
-              muscle={hoveredMuscle}
-              muscleData={data.muscleData}
-              position={{ x: 0, y: 0 }} // Position handled by component
-            />
-          )}
+            {/* Hover Tooltip — positioned at bottom of card */}
+            {hoveredMuscle && (
+              <div className="mt-4 p-3 rounded-lg bg-muted/60 border border-border/50 backdrop-blur-sm">
+                <div className="flex items-center gap-2 mb-1">
+                  <div
+                    className="w-2.5 h-2.5 rounded-full"
+                    style={{
+                      backgroundColor: (() => {
+                        const tier = data.muscleData[hoveredMuscle]?.tier ?? "green";
+                        const tierColors: Record<string, string> = {
+                          green: "#22C55E",
+                          yellow: "#F59E0B",
+                          orange: "#F97316",
+                          red: "#EF4444",
+                        };
+                        return tierColors[tier] || "#22C55E";
+                      })()
+                    }}
+                  />
+                  <span className="font-semibold text-sm">
+                    {(() => {
+                      const labels: Record<string, string> = {
+                        chest: "Chest",
+                        upper_chest: "Upper Chest",
+                        front_delts: "Front Delts",
+                        side_delts: "Side Delts",
+                        rear_delts: "Rear Delts",
+                        triceps: "Triceps",
+                        biceps: "Biceps",
+                        forearms: "Forearms",
+                        upper_back: "Upper Back",
+                        lats: "Lats",
+                        traps: "Traps",
+                        lower_back: "Lower Back",
+                        core: "Core",
+                        glutes: "Glutes",
+                        quads: "Quads",
+                        hamstrings: "Hamstrings",
+                        calves: "Calves",
+                      };
+                      return labels[hoveredMuscle] || hoveredMuscle;
+                    })()}
+                  </span>
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  Recovery: <strong>{Math.round(data.muscleData[hoveredMuscle]?.recovery_score ?? 0)}%</strong> ({data.muscleData[hoveredMuscle]?.tier || "unknown"})
+                </div>
+                {data.muscleData[hoveredMuscle]?.last_trained_at && (
+                  <div className="text-xs text-muted-foreground mt-1">
+                    Last trained: {(() => {
+                      const date = new Date(data.muscleData[hoveredMuscle]!.last_trained_at!);
+                      const now = new Date();
+                      const diffMs = now.getTime() - date.getTime();
+                      const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+                      if (diffDays === 0) return "today";
+                      if (diffDays === 1) return "yesterday";
+                      if (diffDays < 7) return `${diffDays}d ago`;
+                      if (diffDays < 30) return `${Math.floor(diffDays / 7)}w ago`;
+                      return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+                    })()}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </SectionCard>
 
         {/* Imbalance Summary */}
