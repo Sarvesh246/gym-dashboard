@@ -1,17 +1,20 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
+import { motion } from "framer-motion";
 import { BodyMapData, MuscleGroup } from "@/lib/recovery/types";
 import { PageContainer } from "@/components/layout/PageContainer";
-import { SectionCard } from "@/components/ui/SectionCard";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { ErrorState } from "@/components/ui/ErrorState";
 import BodyMapCanvas from "@/components/body-map/BodyMapCanvas";
 import MuscleDetailPanel from "@/components/body-map/MuscleDetailPanel";
 import MuscleFilterControls from "@/components/body-map/MuscleFilterControls";
 import ImbalanceSummary from "@/components/body-map/ImbalanceSummary";
-import MuscleTooltip from "@/components/body-map/MuscleTooltip";
+import MuscleLegend from "@/components/body-map/MuscleLegend";
+import MuscleOverlay from "@/components/body-map/MuscleOverlay";
+
+// ─── Types ────────────────────────────────────────────────────────────────────
 
 type TimeRange = "7d" | "14d" | "30d";
 
@@ -37,79 +40,101 @@ interface BodyMapResponse {
   timeRange: string;
 }
 
+const RANGE_LABELS: Record<TimeRange, string> = {
+  "7d":  "7 days",
+  "14d": "14 days",
+  "30d": "30 days",
+};
+
+// ─── Component ────────────────────────────────────────────────────────────────
+
 /**
- * Body Map Page Client Component
- * Manages:
- * - Time range filter state
- * - Selected muscle detail panel
- * - Hovering muscle tooltip
- * - Data fetching and caching
- * - Responsive layout (desktop side panel vs mobile bottom sheet)
+ * Body Map Page — visual muscle intelligence platform.
+ *
+ * Layout:
+ *  Desktop (lg+): Two-column — body map canvas + inline side panel
+ *  Mobile:        Single column + bottom sheet overlay on muscle tap
  */
 export function BodyMapPageClient() {
-  const router = useRouter();
+  const router       = useRouter();
   const searchParams = useSearchParams();
 
-  // State
   const [timeRange, setTimeRange] = useState<TimeRange>(
     (searchParams.get("range") as TimeRange) || "7d"
   );
-  const [selectedMuscle, setSelectedMuscle] = useState<MuscleGroup | null>(null);
-  const [hoveredMuscle, setHoveredMuscle] = useState<MuscleGroup | null>(null);
-  const [data, setData] = useState<BodyMapResponse | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [selectedMuscle, setSelectedMuscle]   = useState<MuscleGroup | null>(null);
+  const [hoveredMuscle,  setHoveredMuscle]    = useState<MuscleGroup | null>(null);
+  const [hasInteracted,  setHasInteracted]    = useState(false);
+  const [data,           setData]             = useState<BodyMapResponse | null>(null);
+  const [isLoading,      setIsLoading]        = useState(true);
+  const [error,          setError]            = useState<string | null>(null);
 
-  // Fetch body map data
+  // Cache per time range
+  const cache = useRef<Partial<Record<TimeRange, BodyMapResponse>>>({});
+
+  // ─── Data fetching ────────────────────────────────────────────────────────
+
   const fetchBodyMapData = useCallback(async (range: TimeRange) => {
+    if (cache.current[range]) {
+      setData(cache.current[range]!);
+      setIsLoading(false);
+      return;
+    }
+
     setIsLoading(true);
     setError(null);
+
     try {
-      const response = await fetch(`/api/body-map?range=${range}`, {
-        cache: "no-store",
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch body map data");
-      }
-
-      const result = await response.json();
+      const res = await fetch(`/api/body-map?range=${range}`, { cache: "no-store" });
+      if (!res.ok) throw new Error("Failed to fetch muscle recovery data");
+      const result: BodyMapResponse = await res.json();
+      cache.current[range] = result;
       setData(result);
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
-      console.error("Error fetching body map data:", err);
     } finally {
       setIsLoading(false);
     }
   }, []);
 
-  // Fetch on mount and when time range changes
   useEffect(() => {
     fetchBodyMapData(timeRange);
   }, [timeRange, fetchBodyMapData]);
 
-  // Update URL when time range changes
+  // ─── Handlers ─────────────────────────────────────────────────────────────
+
   const handleRangeChange = (newRange: TimeRange) => {
     setTimeRange(newRange);
-    // Update URL query param
+    setSelectedMuscle(null);
     const params = new URLSearchParams();
     params.set("range", newRange);
     router.push(`/body-map?${params.toString()}`, { scroll: false });
   };
 
-  const handleMuscleClick = (muscle: MuscleGroup) => {
-    setSelectedMuscle(muscle);
-  };
+  const handleMuscleClick = useCallback((muscle: MuscleGroup) => {
+    setSelectedMuscle((prev) => (prev === muscle ? null : muscle));
+    setHasInteracted(true);
+  }, []);
 
-  const handleClosePanel = () => {
+  const handleClosePanel = useCallback(() => {
     setSelectedMuscle(null);
-  };
+  }, []);
+
+  // ─── Find imbalance info for selected muscle ───────────────────────────────
+
+  const selectedImbalanceInfo = selectedMuscle && data
+    ? data.imbalances.imbalancedPairs.find((pair) =>
+        pair.pairLabel.toLowerCase().includes(selectedMuscle.replace(/_/g, " ").split(" ")[0])
+      )
+    : undefined;
+
+  // ─── Loading state ─────────────────────────────────────────────────────────
 
   if (isLoading && !data) {
     return (
       <PageContainer>
-        <div className="text-center py-12">
-          <p className="text-muted-foreground mb-4">Loading your muscle recovery map...</p>
+        <div className="flex flex-col items-center justify-center py-24 gap-4">
+          <p className="text-muted-foreground text-sm">Loading muscle recovery map…</p>
           <LoadingState />
         </div>
       </PageContainer>
@@ -120,7 +145,7 @@ export function BodyMapPageClient() {
     return (
       <PageContainer>
         <ErrorState
-          message={error || "Failed to load body map"}
+          message={error}
           retry={
             <button
               onClick={() => fetchBodyMapData(timeRange)}
@@ -137,162 +162,209 @@ export function BodyMapPageClient() {
   if (!data) {
     return (
       <PageContainer>
-        <ErrorState message="No muscle recovery data found. Log a workout to get started." />
+        <ErrorState message="No muscle data found. Log a workout to get started." />
       </PageContainer>
     );
   }
 
-  // Find imbalance info for selected muscle
-  const selectedImbalanceInfo = selectedMuscle
-    ? data.imbalances.imbalancedPairs.find(
-        (pair) =>
-          pair.pairLabel.toLowerCase().includes(selectedMuscle) ||
-          selectedMuscle.includes("_")
-      )
-    : undefined;
+  // ─── Render ────────────────────────────────────────────────────────────────
 
   return (
-    <PageContainer>
-      <div className="space-y-8 py-6">
-        {/* Header */}
-        <div className="text-center space-y-2">
-          <h1 className="text-3xl sm:text-4xl font-bold">Muscle Recovery Map</h1>
-          <p className="text-muted-foreground">
-            Last {timeRange === "7d" ? "7" : timeRange === "14d" ? "14" : "30"} days training load distribution
-          </p>
-        </div>
+    <div className="min-h-screen bg-background">
+      <PageContainer>
+        <div className="py-6 space-y-8">
 
-        {/* Filter Controls */}
-        <MuscleFilterControls
-          selectedRange={timeRange}
-          onRangeChange={handleRangeChange}
-          isLoading={isLoading}
-        />
+          {/* ── Header ── */}
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.35 }}
+            className="space-y-1 text-center"
+          >
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
+              Muscle Recovery Map
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              Last {RANGE_LABELS[timeRange]} training load distribution
+            </p>
+          </motion.div>
 
-        {/* Body Map Canvas */}
-        <SectionCard title="Your Muscles">
-          <div className="relative">
-            <div className="flex justify-center">
-              <BodyMapCanvas
-                muscleData={data.muscleData}
-                onMuscleClick={handleMuscleClick}
-                onMuscleHover={setHoveredMuscle}
-                selectedMuscle={selectedMuscle}
-              />
-            </div>
-
-            {/* Hover Tooltip — positioned at bottom of card */}
-            {hoveredMuscle && (
-              <div className="mt-4 p-3 rounded-lg bg-muted/60 border border-border/50 backdrop-blur-sm">
-                <div className="flex items-center gap-2 mb-1">
-                  <div
-                    className="w-2.5 h-2.5 rounded-full"
-                    style={{
-                      backgroundColor: (() => {
-                        const tier = data.muscleData[hoveredMuscle]?.tier ?? "green";
-                        const tierColors: Record<string, string> = {
-                          green: "#22C55E",
-                          yellow: "#F59E0B",
-                          orange: "#F97316",
-                          red: "#EF4444",
-                        };
-                        return tierColors[tier] || "#22C55E";
-                      })()
-                    }}
-                  />
-                  <span className="font-semibold text-sm">
-                    {(() => {
-                      const labels: Record<string, string> = {
-                        chest: "Chest",
-                        upper_chest: "Upper Chest",
-                        front_delts: "Front Delts",
-                        side_delts: "Side Delts",
-                        rear_delts: "Rear Delts",
-                        triceps: "Triceps",
-                        biceps: "Biceps",
-                        forearms: "Forearms",
-                        upper_back: "Upper Back",
-                        lats: "Lats",
-                        traps: "Traps",
-                        lower_back: "Lower Back",
-                        core: "Core",
-                        glutes: "Glutes",
-                        quads: "Quads",
-                        hamstrings: "Hamstrings",
-                        calves: "Calves",
-                      };
-                      return labels[hoveredMuscle] || hoveredMuscle;
-                    })()}
-                  </span>
-                </div>
-                <div className="text-xs text-muted-foreground">
-                  Recovery: <strong>{Math.round(data.muscleData[hoveredMuscle]?.recovery_score ?? 0)}%</strong> ({data.muscleData[hoveredMuscle]?.tier || "unknown"})
-                </div>
-                {data.muscleData[hoveredMuscle]?.last_trained_at && (
-                  <div className="text-xs text-muted-foreground mt-1">
-                    Last trained: {(() => {
-                      const date = new Date(data.muscleData[hoveredMuscle]!.last_trained_at!);
-                      const now = new Date();
-                      const diffMs = now.getTime() - date.getTime();
-                      const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-                      if (diffDays === 0) return "today";
-                      if (diffDays === 1) return "yesterday";
-                      if (diffDays < 7) return `${diffDays}d ago`;
-                      if (diffDays < 30) return `${Math.floor(diffDays / 7)}w ago`;
-                      return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-                    })()}
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        </SectionCard>
-
-        {/* Imbalance Summary */}
-        <SectionCard title="Training Balance">
-          <ImbalanceSummary
-            muscleData={data.muscleData}
-            overworkedMuscles={data.overworkedMuscles}
-            undertrainedMuscles={data.undertrainedMuscles}
-            imbalances={data.imbalances.imbalancedPairs}
+          {/* ── Filter controls ── */}
+          <MuscleFilterControls
+            selectedRange={timeRange}
+            onRangeChange={handleRangeChange}
+            isLoading={isLoading}
           />
-        </SectionCard>
 
-        {/* Systemic Recovery Info */}
-        <SectionCard title="Overall Readiness">
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-            <div className="p-4 rounded-lg bg-muted">
-              <div className="text-xs text-muted-foreground mb-1">Readiness</div>
-              <div className="text-2xl font-bold text-primary">
-                {Math.round(data.systemicReadiness.readiness_score)}
+          {/* ── Main content: two-column on desktop ── */}
+          <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-6 lg:items-start">
+
+            {/* Left column — canvas + legend + readiness strip */}
+            <div className="space-y-4">
+
+              {/* Canvas card */}
+              <div className="rounded-2xl border border-border/60 bg-card p-4 sm:p-6">
+                <BodyMapCanvas
+                  muscleData={data.muscleData}
+                  onMuscleClick={handleMuscleClick}
+                  onMuscleHover={setHoveredMuscle}
+                  selectedMuscle={selectedMuscle}
+                />
+
+                {/* Canvas overlay — hint / selected chip */}
+                <MuscleOverlay
+                  selectedMuscle={selectedMuscle}
+                  muscleData={data.muscleData}
+                  hasInteracted={hasInteracted}
+                />
+
+                {/* Inline hover strip (desktop only — shows tooltip info below SVG) */}
+                <div className="hidden lg:block mt-4 min-h-[3rem]">
+                  {hoveredMuscle && data.muscleData[hoveredMuscle] && (
+                    <motion.div
+                      key={hoveredMuscle}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="flex items-center gap-3 px-3 py-2 rounded-lg bg-muted/60 border border-border/40"
+                    >
+                      <div
+                        className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                        style={{
+                          backgroundColor: (() => {
+                            const tier = data.muscleData[hoveredMuscle]?.tier ?? "green";
+                            const map: Record<string, string> = {
+                              green: "#22C55E", yellow: "#F59E0B",
+                              orange: "#F97316", red: "#EF4444",
+                            };
+                            return map[tier] || "#9CA3AF";
+                          })(),
+                        }}
+                      />
+                      <span className="text-sm font-medium">
+                        {MUSCLE_LABELS[hoveredMuscle]}
+                      </span>
+                      <span className="text-xs text-muted-foreground ml-auto">
+                        Recovery {Math.round(data.muscleData[hoveredMuscle]?.recovery_score ?? 0)}%
+                      </span>
+                    </motion.div>
+                  )}
+                </div>
               </div>
-              <div className="text-xs text-muted-foreground mt-1">/ 100</div>
-            </div>
-            <div className="p-4 rounded-lg bg-muted">
-              <div className="text-xs text-muted-foreground mb-1">Systemic Fatigue</div>
-              <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">
-                {Math.round(data.systemicReadiness.systemic_fatigue)}
+
+              {/* Legend */}
+              <div className="rounded-2xl border border-border/60 bg-card px-4 py-3 sm:px-6">
+                <MuscleLegend compact />
               </div>
-              <div className="text-xs text-muted-foreground mt-1">/ 100</div>
+
+              {/* Systemic readiness strip */}
+              <ReadinessStrip systemicReadiness={data.systemicReadiness} />
             </div>
-            <div className="p-4 rounded-lg bg-muted">
-              <div className="text-xs text-muted-foreground mb-1">Status</div>
-              <div className="text-lg font-bold capitalize">
-                {data.systemicReadiness.recovery_tier}
+
+            {/* Right column — desktop inline detail panel */}
+            <div className="hidden lg:block">
+              <div className="rounded-2xl border border-border/60 bg-card overflow-hidden min-h-[460px]">
+                <MuscleDetailPanel
+                  isOpen={!!selectedMuscle}
+                  muscle={selectedMuscle}
+                  muscleData={data.muscleData}
+                  onClose={handleClosePanel}
+                  imbalanceInfo={selectedImbalanceInfo}
+                  variant="inline"
+                />
               </div>
             </div>
           </div>
-        </SectionCard>
-      </div>
 
-      {/* Detail Panel */}
-      <MuscleDetailPanel
-        isOpen={!!selectedMuscle}
-        muscle={selectedMuscle}
-        muscleData={data.muscleData}
-        onClose={handleClosePanel}
-        imbalanceInfo={selectedImbalanceInfo}
-      />
-    </PageContainer>
+          {/* ── Training balance (full width) ── */}
+          <div className="rounded-2xl border border-border/60 bg-card p-4 sm:p-6">
+            <h2 className="text-sm font-semibold mb-4">Training Balance</h2>
+            <ImbalanceSummary
+              muscleData={data.muscleData}
+              overworkedMuscles={data.overworkedMuscles}
+              undertrainedMuscles={data.undertrainedMuscles}
+              imbalances={data.imbalances.imbalancedPairs}
+            />
+          </div>
+
+        </div>
+      </PageContainer>
+
+      {/* ── Mobile bottom sheet (lg:hidden) ── */}
+      <div className="lg:hidden">
+        <MuscleDetailPanel
+          isOpen={!!selectedMuscle}
+          muscle={selectedMuscle}
+          muscleData={data.muscleData}
+          onClose={handleClosePanel}
+          imbalanceInfo={selectedImbalanceInfo}
+          variant="sheet"
+        />
+      </div>
+    </div>
   );
 }
+
+// ─── Readiness strip ──────────────────────────────────────────────────────────
+
+function ReadinessStrip({
+  systemicReadiness,
+}: {
+  systemicReadiness: BodyMapResponse["systemicReadiness"];
+}) {
+  const tier = systemicReadiness.recovery_tier;
+  const tierColorClass =
+    tier === "green"  ? "text-green-500"  :
+    tier === "yellow" ? "text-yellow-500" :
+    tier === "orange" ? "text-orange-500" : "text-red-500";
+
+  return (
+    <div className="rounded-2xl border border-border/60 bg-card px-4 py-3 sm:px-6">
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div>
+            <p className="text-xs text-muted-foreground">Readiness</p>
+            <p className={`text-xl font-bold tabular-nums ${tierColorClass}`}>
+              {Math.round(systemicReadiness.readiness_score)}
+              <span className="text-sm font-normal text-muted-foreground ml-0.5">/100</span>
+            </p>
+          </div>
+        </div>
+        <div>
+          <p className="text-xs text-muted-foreground text-right">Systemic Fatigue</p>
+          <p className="text-xl font-bold tabular-nums text-right text-orange-500">
+            {Math.round(systemicReadiness.systemic_fatigue)}
+            <span className="text-sm font-normal text-muted-foreground ml-0.5">/100</span>
+          </p>
+        </div>
+        <div>
+          <p className="text-xs text-muted-foreground text-right">Status</p>
+          <p className={`text-sm font-semibold capitalize text-right ${tierColorClass}`}>
+            {tier}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Muscle label map ─────────────────────────────────────────────────────────
+
+const MUSCLE_LABELS: Record<MuscleGroup, string> = {
+  chest:       "Chest",
+  upper_chest: "Upper Chest",
+  front_delts: "Front Delts",
+  side_delts:  "Side Delts",
+  rear_delts:  "Rear Delts",
+  triceps:     "Triceps",
+  biceps:      "Biceps",
+  forearms:    "Forearms",
+  upper_back:  "Upper Back",
+  lats:        "Lats",
+  traps:       "Traps",
+  lower_back:  "Lower Back",
+  core:        "Core",
+  glutes:      "Glutes",
+  quads:       "Quads",
+  hamstrings:  "Hamstrings",
+  calves:      "Calves",
+};
