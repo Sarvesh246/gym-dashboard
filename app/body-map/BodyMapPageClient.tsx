@@ -121,10 +121,12 @@ export function BodyMapPageClient() {
   }, []);
 
   // ─── Find imbalance info for selected muscle ───────────────────────────────
+  // Map each muscle to the pair labels it participates in so both sides
+  // (e.g. chest AND upper_back) correctly surface the push/pull imbalance.
 
   const selectedImbalanceInfo = selectedMuscle && data
     ? data.imbalances.imbalancedPairs.find((pair) =>
-        pair.pairLabel.toLowerCase().includes(selectedMuscle.replace(/_/g, " ").split(" ")[0])
+        MUSCLE_TO_PAIR_LABELS[selectedMuscle]?.some((label) => pair.pairLabel === label)
       )
     : undefined;
 
@@ -315,7 +317,8 @@ function ReadinessStrip({
   const tierColorClass =
     tier === "green"  ? "text-green-500"  :
     tier === "yellow" ? "text-yellow-500" :
-    tier === "orange" ? "text-orange-500" : "text-red-500";
+    tier === "orange" ? "text-orange-500" :
+    tier === "red"    ? "text-red-500"    : "text-muted-foreground";
 
   return (
     <div className="rounded-2xl border border-border/60 bg-card px-4 py-3 sm:px-6">
@@ -346,6 +349,21 @@ function ReadinessStrip({
     </div>
   );
 }
+
+// ─── Muscle → imbalance pair label map ───────────────────────────────────────
+// Maps each muscle to the canonical pairLabel strings from the API so that
+// both sides of a pair (e.g. chest AND upper_back) surface the same warning.
+
+const MUSCLE_TO_PAIR_LABELS: Partial<Record<MuscleGroup, string[]>> = {
+  chest:       ["Push vs Pull (Chest vs Back)"],
+  upper_back:  ["Push vs Pull (Chest vs Back)"],
+  quads:       ["Leg Balance (Quads vs Hamstrings)"],
+  hamstrings:  ["Leg Balance (Quads vs Hamstrings)"],
+  biceps:      ["Arm Balance (Biceps vs Triceps)"],
+  triceps:     ["Arm Balance (Biceps vs Triceps)"],
+  front_delts: ["Shoulder Balance (Front vs Rear)"],
+  rear_delts:  ["Shoulder Balance (Front vs Rear)"],
+};
 
 // ─── Muscle label map ─────────────────────────────────────────────────────────
 
