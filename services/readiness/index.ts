@@ -17,6 +17,9 @@ import {
   getDailyHealthMetricsWithDefaults,
   computeNormalizedHealthScores,
 } from "@/services/health";
+import { getWeeklyAdherenceStats, getUserNutritionGoals } from "@/services/nutrition";
+import { getDailyHydrationTotal, calculateHydrationReadinessModifier } from "@/services/hydration/core";
+import { calculateNutritionRecoveryModifier } from "@/lib/nutrition/adherence";
 import { createClient } from "@/lib/supabase/server";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -82,21 +85,42 @@ export async function computeReadiness(userId: string): Promise<ReadinessOutput>
     consecutive_training_days: consecutiveDays,
   });
 
-  // 8. Persist back so the systemic record is up to date
+  // 8. Apply nutrition + hydration modifiers (deterministic, moderate effect)
+  const [weeklyNutritionAdherence, hydrationToday] = await Promise.all([
+    getWeeklyAdherenceStats(userId).catch(() => null),
+    getDailyHydrationTotal(userId, today).catch(() => 0),
+  ]);
+
+  let nutrition_modifier = 0;
+  let hydration_modifier = 0;
+
+  if (weeklyNutritionAdherence) {
+    nutrition_modifier = calculateNutritionRecoveryModifier(weeklyNutritionAdherence);
+  }
+
+  const goalsRes = await getUserNutritionGoals(userId).catch(() => null);
+  const hydration_target = goalsRes?.hydration_target_ml ?? 2500;
+  hydration_modifier = calculateHydrationReadinessModifier(hydrationToday, hydration_target);
+
+  const total_modifier = nutrition_modifier + hydration_modifier;
+  const adjusted_readiness = Math.max(0, Math.min(100, result.readiness_score + total_modifier));
+  const adjusted_result = { ...result, readiness_score: adjusted_readiness };
+
+  // 9. Persist back so the systemic record is up to date
   await upsertSystemicRecovery(userId, {
-    readiness_score:     result.readiness_score,
+    readiness_score:     adjusted_readiness,
     systemic_fatigue,
     sleep_modifier:      sleep_modifier ?? 0,
     stress_modifier:     stress_modifier ?? 0,
     hrv_modifier:        systemic?.hrv_modifier ?? 0,
     strain_accumulation: strainAccumulation,
-    recovery_tier:       result.tier,
+    recovery_tier:       adjusted_result.tier,
   });
 
-  // 9. Persist recovery snapshot for trend analysis (NEW)
-  await persistRecoverySnapshot(userId, today, result, strainAccumulation);
+  // 10. Persist recovery snapshot for trend analysis (NEW)
+  await persistRecoverySnapshot(userId, today, adjusted_result, strainAccumulation);
 
-  return result;
+  return adjusted_result;
 }
 
 // ─── Quick readiness (no DB write) ────────────────────────────────────────────

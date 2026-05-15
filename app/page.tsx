@@ -16,12 +16,10 @@ import {
   mockCalorieData,
   mockWorkoutVolumeData,
   mockSleepData,
-  mockInsights,
   mockBodyZones,
 } from "@/lib/mock-data";
 import {
   Zap,
-  Sparkles,
   TrendingUp,
   Clock,
 } from "lucide-react";
@@ -29,6 +27,12 @@ import {
 // Lazy load nutrition widget (client component with data fetching)
 const NutritionWidget = dynamic(() => import("@/components/dashboard/NutritionWidget"), {
   loading: () => <div className="rounded-lg bg-gray-100 animate-pulse h-48" />,
+});
+
+// Lazy load coach insight card (fetches weekly report client-side)
+const CoachInsightCard = dynamic(() => import("@/components/dashboard/CoachInsightCard"), {
+  loading: () => <div className="rounded-xl border border-border bg-card h-28 animate-pulse" />,
+  ssr: false,
 });
 
 function getGreeting() {
@@ -50,12 +54,6 @@ const insightIcons = {
   "trending-up": TrendingUp,
   "zap": Zap,
   "clock": Clock,
-};
-
-const insightVariantColors = {
-  success: "text-success",
-  warning: "text-warning",
-  accent: "text-primary",
 };
 
 export default async function DashboardPage() {
@@ -255,33 +253,8 @@ export default async function DashboardPage() {
           })()}
         </SectionCard>
 
-        {/* AI Insights */}
-        <GlassCard className="flex flex-col gap-4">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center">
-              <Sparkles size={16} className="text-primary" />
-            </div>
-            <div>
-              <h3 className="text-sm font-semibold text-foreground">AI Health Insights</h3>
-              <p className="text-xs text-muted-foreground">Updated just now</p>
-            </div>
-          </div>
-
-          <div className="space-y-3">
-            {mockInsights.map((insight) => {
-              const IconComp = insightIcons[insight.icon as keyof typeof insightIcons] ?? Zap;
-              const iconColor = insightVariantColors[insight.variant];
-              return (
-                <div key={insight.id} className="flex items-start gap-3">
-                  <div className={`mt-0.5 shrink-0 ${iconColor}`}>
-                    <IconComp size={14} />
-                  </div>
-                  <p className="text-sm text-foreground/80 leading-relaxed">{insight.text}</p>
-                </div>
-              );
-            })}
-          </div>
-        </GlassCard>
+        {/* Coach Insight Card */}
+        <CoachInsightCard maxCards={2} />
       </div>
     </PageContainer>
   );
