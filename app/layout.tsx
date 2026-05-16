@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { ThemeProvider } from "next-themes";
 import { AppShell } from "@/components/layout/AppShell";
 import { UnitSystemProvider } from "@/lib/unit-system-context";
+import { SITE_URL } from "@/lib/site";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -16,6 +17,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
   title: { default: "Myostat", template: "%s | Myostat" },
   description: "Your premium fitness operating system",
   manifest: "/manifest.json",

@@ -28,7 +28,7 @@ export function AppShell({ children }: AppShellProps) {
   const pathname = usePathname();
 
   // These routes render full-screen without the app shell navigation
-  const FULL_SCREEN_ROUTES = ["/onboarding", "/login", "/signup"];
+  const FULL_SCREEN_ROUTES = ["/onboarding", "/login", "/signup", "/privacy", "/terms"];
   if (FULL_SCREEN_ROUTES.some((r) => pathname.startsWith(r))) {
     return <>{children}</>;
   }

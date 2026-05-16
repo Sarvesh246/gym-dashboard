@@ -131,6 +131,18 @@ export default function SignupPage() {
             Sign in
           </Link>
         </p>
+
+        <p className="mt-4 text-center text-xs text-muted-foreground">
+          By creating an account, you agree to the{" "}
+          <Link href="/terms" className="text-primary hover:underline">
+            Terms of Service
+          </Link>{" "}
+          and{" "}
+          <Link href="/privacy" className="text-primary hover:underline">
+            Privacy Policy
+          </Link>
+          .
+        </p>
       </motion.div>
     </div>
   );
