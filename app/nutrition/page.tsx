@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import { useEffect, useState, useCallback } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { DailyNutritionSummary, NutritionGoals, NutritionLog } from "@/lib/nutrition/types";
@@ -26,7 +27,7 @@ function formatDateLabel(date: string): string {
   });
 }
 
-export default function NutritionPage() {
+function NutritionPageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const today = new Date().toISOString().split("T")[0];
@@ -315,5 +316,13 @@ export default function NutritionPage() {
         }}
       />
     </div>
+  );
+}
+
+export default function NutritionPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-background flex items-center justify-center"><div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" /></div>}>
+      <NutritionPageContent />
+    </Suspense>
   );
 }

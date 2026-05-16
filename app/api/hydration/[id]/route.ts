@@ -6,14 +6,15 @@ import { deleteHydrationLog } from "@/services/hydration/core";
 
 export async function DELETE(
   _req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const success = await deleteHydrationLog(user.id, params.id);
+    const success = await deleteHydrationLog(user.id, id);
     if (!success) {
       return NextResponse.json({ error: "Failed to delete log" }, { status: 400 });
     }

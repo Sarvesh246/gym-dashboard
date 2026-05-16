@@ -32,8 +32,13 @@ const NutritionWidget = dynamic(() => import("@/components/dashboard/NutritionWi
 // Lazy load coach insight card (fetches weekly report client-side)
 const CoachInsightCard = dynamic(() => import("@/components/dashboard/CoachInsightCard"), {
   loading: () => <div className="rounded-xl border border-border bg-card h-28 animate-pulse" />,
-  ssr: false,
 });
+
+// Lazy load trend sparkline widgets
+const TrendWidget = dynamic(
+  () => import("@/components/dashboard/TrendWidget").then((m) => ({ default: m.TrendWidget })),
+  { loading: () => <div className="rounded-xl border border-border bg-card h-24 animate-pulse" /> }
+);
 
 function getGreeting() {
   const hour = new Date().getHours();
@@ -156,6 +161,16 @@ export default async function DashboardPage() {
               />
             </div>
           </SectionCard>
+        </div>
+      </SectionContainer>
+
+      {/* Performance Trend Sparklines */}
+      <SectionContainer title="Performance Trends">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <TrendWidget title="Readiness" metric="readiness" days={14} color="primary" unit="/100" reportHref="/reports/weekly" />
+          <TrendWidget title="Volume" metric="volume" days={14} color="success" unit=" sets" reportHref="/reports/weekly" />
+          <TrendWidget title="Bodyweight" metric="weight" days={30} color="warning" unit=" kg" reportHref="/reports/monthly" />
+          <TrendWidget title="Sleep" metric="sleep" days={14} color="muted" unit=" hrs" />
         </div>
       </SectionContainer>
 

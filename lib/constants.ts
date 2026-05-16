@@ -6,6 +6,7 @@ import {
   User,
   Settings,
   Activity,
+  BarChart2,
 } from "lucide-react";
 
 export const NAV_ITEMS = [
@@ -14,6 +15,7 @@ export const NAV_ITEMS = [
   { label: "Nutrition", href: "/nutrition", icon: Apple },
   { label: "Recovery", href: "/recovery", icon: Moon },
   { label: "Body Map", href: "/body-map", icon: Activity },
+  { label: "Reports", href: "/reports", icon: BarChart2 },
   { label: "Profile", href: "/profile", icon: User },
 ] as const;
 
