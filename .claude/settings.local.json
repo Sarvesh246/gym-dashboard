@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(Get-ChildItem -Path \"C:\\\\Projects\\\\Cursor\\\\Gym Dashboard\" -Recurse -Directory)",
+      "Bash(Select-Object -ExpandProperty FullName)",
+      "Bash(Sort-Object)",
+      "Bash(Get-ChildItem -Path \"C:\\\\Projects\\\\Cursor\\\\Gym Dashboard\" -Directory)",
+      "Bash(Select-Object Name)",
+      "Bash(Select-Object FullName)",
+      "Bash(Sort-Object FullName)",
+      "Bash(New-Item -ItemType Directory -Force -Path \"C:\\\\Projects\\\\Cursor\\\\Gym Dashboard\\\\lib\\\\reports\")",
+      "Bash(Out-Null)",
+      "Bash(New-Item -ItemType Directory -Force -Path \"C:\\\\Projects\\\\Cursor\\\\Gym Dashboard\\\\lib\\\\charts\")",
+      "Bash(New-Item -ItemType Directory -Force -Path \"C:\\\\Projects\\\\Cursor\\\\Gym Dashboard\\\\services\\\\trends\")"
+    ]
+  }
+}
