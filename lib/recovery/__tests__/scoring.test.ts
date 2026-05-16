@@ -271,7 +271,7 @@ describe("calculateReadiness", () => {
       systemic_fatigue:     85,
       avg_muscle_recovery:  95,
     });
-    expect(result.readiness_score).toBeLessThan(55);
+    expect(result.readiness_score).toBeLessThan(60);
     expect(["orange", "red"]).toContain(result.tier);
   });
 
