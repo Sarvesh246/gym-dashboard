@@ -8,6 +8,7 @@ import { ChartPlaceholder } from "@/components/ui/ChartPlaceholder";
 import { ReadinessCard } from "@/components/recovery/ReadinessCard";
 import { MuscleStateGrid } from "@/components/recovery/MuscleStateGrid";
 import { RecommendationsList } from "@/components/recovery/RecommendationsList";
+import { WearableStatusCard } from "@/components/recovery/WearableStatusCard";
 import { mockSleepData, mockHRVData } from "@/lib/mock-data";
 import {
   getSystemicRecovery,
@@ -122,6 +123,11 @@ export default async function RecoveryPage() {
             animateValue
           />
         </div>
+      </SectionContainer>
+
+      {/* Wearable Status */}
+      <SectionContainer>
+        <WearableStatusCard />
       </SectionContainer>
 
       {/* Charts */}

@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useState, useEffect } from "react";
 import { logout } from "@/app/actions/auth";
 import { useUnitSystem } from "@/lib/unit-system-context";
+import { WearablesSection } from "./WearablesSection";
 import {
   Palette,
   Bell,
@@ -413,11 +414,7 @@ export function SettingsContent({ email }: { email: string }) {
       {/* Wearable Integrations */}
       <SectionContainer>
         <SectionCard title="Wearable Integrations" subtitle="Connect your devices for automatic data sync" action={<Watch size={16} className="text-muted-foreground" />}>
-          {["Apple Health", "Garmin Connect", "Fitbit", "Polar", "Wahoo"].map((integration) => (
-            <SettingRow key={integration} label={integration}>
-              <StatusChip label="Coming soon" variant="neutral" />
-            </SettingRow>
-          ))}
+          <WearablesSection />
         </SectionCard>
       </SectionContainer>
 
