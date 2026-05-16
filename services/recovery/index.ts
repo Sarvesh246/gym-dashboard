@@ -4,7 +4,7 @@
  */
 
 import { createClient } from "@/lib/supabase/server";
-import type { SystemicRecovery, StrainOutput } from "@/lib/recovery/types";
+import type { SystemicRecovery, StrainOutput, ReadinessInput } from "@/lib/recovery/types";
 import {
   calculateSystemicFatigue,
   calculateReadiness,
@@ -12,6 +12,7 @@ import {
 } from "@/lib/recovery/scoring";
 import { applySystemicDecay } from "@/lib/recovery/decay";
 import { SLEEP_QUALITY_SCORE, STRESS_LEVEL_SCORE } from "@/lib/recovery/constants";
+import { calculateEnhancedReadiness } from "@/services/health/readiness-enhancement";
 
 // ─── Read ─────────────────────────────────────────────────────────────────────
 
@@ -40,6 +41,30 @@ export async function getSystemicRecovery(
     };
   } catch {
     return null;
+  }
+}
+
+// ─── Calculate readiness with optional wearable enhancement ────────────────
+
+async function calculateReadinessWithWearables(
+  userId: string,
+  input: ReadinessInput,
+  hasManualSleep: boolean = false
+): Promise<{ score: number; confidenceMultiplier: number }> {
+  try {
+    // Try to use wearable-enhanced readiness if available
+    const enhanced = await calculateEnhancedReadiness(userId, input, hasManualSleep);
+    return {
+      score: enhanced.readiness_score,
+      confidenceMultiplier: enhanced.confidence_multiplier,
+    };
+  } catch {
+    // Fall back to standard readiness calculation
+    const result = calculateReadiness(input);
+    return {
+      score: result.readiness_score,
+      confidenceMultiplier: 1.0,
+    };
   }
 }
 
@@ -76,7 +101,7 @@ export async function computeSystemicRecoveryFromProfile(userId: string): Promis
       sleep_hours_avg:          sleepScore >= 80 ? 7.5 : sleepScore >= 50 ? 6.5 : 5.5,
     });
 
-    const readinessResult = calculateReadiness({
+    const readinessInput: ReadinessInput = {
       systemic_fatigue:         systemicFatigue,
       sleep_quality_score:      sleepScore,
       stress_score:             100 - stressScore,
@@ -84,7 +109,10 @@ export async function computeSystemicRecoveryFromProfile(userId: string): Promis
       strain_accumulation:      daysPerWeek * 35,
       avg_muscle_recovery:      72,
       consecutive_training_days: consecutiveDays,
-    });
+    };
+
+    // Use wearable-enhanced readiness if available, otherwise standard
+    const readinessResult = await calculateReadinessWithWearables(userId, readinessInput, false);
 
     // Modifiers normalised to −20 to +20
     const sleepModifier  = ((sleepScore - 65) / 35)  * 20;
@@ -92,7 +120,7 @@ export async function computeSystemicRecoveryFromProfile(userId: string): Promis
 
     return {
       systemic_fatigue: systemicFatigue,
-      readiness_score:  readinessResult.readiness_score,
+      readiness_score:  readinessResult.score,
       sleep_modifier:   sleepModifier,
       stress_modifier:  stressModifier,
     };
