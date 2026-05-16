@@ -18,7 +18,7 @@ interface ProviderStatus {
 
 const PROVIDER_LABELS: Record<string, string> = {
   garmin: "Garmin Connect",
-  apple: "Apple Health",
+  apple_health: "Apple Health",
   fitbit: "Fitbit",
   polar: "Polar",
   wahoo: "Wahoo",

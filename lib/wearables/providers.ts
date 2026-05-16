@@ -50,7 +50,7 @@ export const PROVIDER_REGISTRY: Record<WearableProvider, ProviderMetadata> = {
   apple_health: {
     name: "Apple Health",
     description: "Apple HealthKit (iOS/macOS)",
-    implemented: false,
+    implemented: true,
     supportedMetrics: [
       "sleep_duration",
       "sleep_quality",
@@ -59,12 +59,12 @@ export const PROVIDER_REGISTRY: Record<WearableProvider, ProviderMetadata> = {
       "daily_steps",
       "active_calories",
     ],
-    authFlow: "platform_native",
+    authFlow: "oauth2",
   },
   fitbit: {
     name: "Fitbit",
     description: "Fitbit wearables and trackers",
-    implemented: false,
+    implemented: true,
     supportedMetrics: [
       "sleep_duration",
       "sleep_quality",
@@ -81,7 +81,7 @@ export const PROVIDER_REGISTRY: Record<WearableProvider, ProviderMetadata> = {
   polar: {
     name: "Polar",
     description: "Polar sports watches",
-    implemented: false,
+    implemented: true,
     supportedMetrics: [
       "sleep_duration",
       "sleep_quality",
@@ -94,7 +94,7 @@ export const PROVIDER_REGISTRY: Record<WearableProvider, ProviderMetadata> = {
   wahoo: {
     name: "Wahoo",
     description: "Wahoo fitness devices",
-    implemented: false,
+    implemented: true,
     supportedMetrics: [
       "daily_steps",
       "active_calories",

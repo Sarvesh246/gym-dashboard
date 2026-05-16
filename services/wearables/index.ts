@@ -164,3 +164,59 @@ export function getProviderMetadata(provider: WearableProvider) {
 export function isProviderImplemented(provider: WearableProvider): boolean {
   return PROVIDER_REGISTRY[provider]?.implemented ?? false;
 }
+
+// ─── Metrics Storage ──────────────────────────────────────────────────────
+
+import type { NormalizedHealthMetrics } from "@/lib/health/types";
+import { filterMetrics, hasSignificantData } from "./normalizer";
+
+/**
+ * Store normalized health metrics from any provider
+ */
+export async function storeHealthMetrics(
+  userId: string,
+  provider: WearableProvider,
+  metricDate: string,
+  metrics: NormalizedHealthMetrics
+): Promise<boolean> {
+  try {
+    // Filter out empty metrics
+    const filtered = filterMetrics(metrics);
+
+    if (!hasSignificantData(filtered)) {
+      console.warn(`No significant data for ${metricDate} from ${provider}`);
+      return false;
+    }
+
+    const supabase = await createClient();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error } = await (supabase as any)
+      .from("wearable_health_metrics")
+      .upsert(
+        {
+          user_id: userId,
+          metric_date: metricDate,
+          provider,
+          sleep_duration: filtered.sleep_duration,
+          sleep_quality: filtered.sleep_quality,
+          hrv: filtered.hrv,
+          resting_heart_rate: filtered.resting_heart_rate,
+          stress_score: filtered.stress_score,
+          daily_steps: filtered.daily_steps,
+          active_calories: filtered.active_calories,
+          activity_level: filtered.activity_level,
+          vo2_max: filtered.vo2_max,
+          training_load: filtered.training_load,
+          recovery_status: filtered.recovery_status,
+          last_synced_at: new Date().toISOString(),
+        },
+        { onConflict: "user_id,metric_date,provider" }
+      );
+
+    if (error) throw error;
+    return true;
+  } catch (err) {
+    console.error(`Failed to store ${provider} metrics:`, err);
+    return false;
+  }
+}
