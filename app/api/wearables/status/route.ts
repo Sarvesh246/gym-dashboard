@@ -37,12 +37,12 @@ export async function GET(request: NextRequest) {
     const implementedProviders = getImplementedProviders();
     const statusMap = await Promise.all(
       implementedProviders.map(async (p) => {
-        const conn = connections.find((c) => c.provider === p.name);
-        const health = syncHealth.find((h) => h.provider === p.name);
+        const conn = connections.find((c) => c.provider === p);
+        const health = syncHealth.find((h) => h.provider === p);
         const isConnected = conn?.connection_status === "connected";
 
         return {
-          provider: p.name,
+          provider: p,
           connected: isConnected,
           has_token: !!conn?.access_token,
           token_expiry: conn?.token_expiry || null,
