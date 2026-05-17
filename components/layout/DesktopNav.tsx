@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
@@ -8,9 +9,32 @@ import { cn } from "@/lib/utils";
 import { NAV_ITEMS, SETTINGS_NAV, APP_NAME } from "@/lib/constants";
 import { ThemeToggle } from "@/components/utility/ThemeToggle";
 import { Settings } from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
+
+interface NavUser {
+  name: string;
+  initial: string;
+  avatarUrl: string | null;
+}
 
 export function DesktopNav() {
   const pathname = usePathname();
+  const [navUser, setNavUser] = useState<NavUser | null>(null);
+
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) return;
+      const meta = user.user_metadata ?? {};
+      const fullName: string =
+        meta.full_name || meta.name || user.email?.split("@")[0] || "User";
+      setNavUser({
+        name: fullName,
+        initial: fullName.charAt(0).toUpperCase(),
+        avatarUrl: meta.avatar_url || meta.picture || null,
+      });
+    });
+  }, []);
 
   return (
     <aside className="fixed left-0 top-0 bottom-0 z-40 hidden md:flex w-60 flex-col border-r border-border bg-card">
@@ -84,12 +108,27 @@ export function DesktopNav() {
         </Link>
 
         <div className="flex items-center gap-3 rounded-xl px-3 py-2.5">
-          {/* Avatar placeholder */}
-          <div className="h-7 w-7 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
-            <span className="text-xs font-semibold text-primary">A</span>
+          {/* Avatar: Google profile picture or initial */}
+          <div className="h-7 w-7 rounded-full bg-primary/20 flex items-center justify-center shrink-0 overflow-hidden">
+            {navUser?.avatarUrl ? (
+              <Image
+                src={navUser.avatarUrl}
+                alt={navUser.name}
+                width={28}
+                height={28}
+                className="w-full h-full object-cover"
+                referrerPolicy="no-referrer"
+              />
+            ) : (
+              <span className="text-xs font-semibold text-primary">
+                {navUser?.initial ?? "…"}
+              </span>
+            )}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-xs font-medium text-foreground truncate">Alex Morgan</p>
+            <p className="text-xs font-medium text-foreground truncate">
+              {navUser?.name ?? ""}
+            </p>
             <p className="text-[10px] text-muted-foreground truncate">Premium</p>
           </div>
           <ThemeToggle size="sm" />

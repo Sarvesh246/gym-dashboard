@@ -5,11 +5,11 @@ import dynamic from "next/dynamic";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { SectionContainer } from "@/components/layout/SectionContainer";
 import { SectionCard } from "@/components/ui/SectionCard";
-import { GlassCard } from "@/components/ui/GlassCard";
 import { StatusChip } from "@/components/ui/StatusChip";
 import { ChartPlaceholder } from "@/components/ui/ChartPlaceholder";
 import { ThemeToggle } from "@/components/utility/ThemeToggle";
 import { MetricsOverview } from "@/components/dashboard/MetricsOverview";
+import type { WearableSnapshot } from "@/components/dashboard/MetricsOverview";
 import {
   mockMetrics,
   mockWeightData,
@@ -18,11 +18,6 @@ import {
   mockSleepData,
   mockBodyZones,
 } from "@/lib/mock-data";
-import {
-  Zap,
-  TrendingUp,
-  Clock,
-} from "lucide-react";
 
 // Lazy load nutrition widget (client component with data fetching)
 const NutritionWidget = dynamic(() => import("@/components/dashboard/NutritionWidget"), {
@@ -55,11 +50,21 @@ function getFormattedDate() {
   });
 }
 
-const insightIcons = {
-  "trending-up": TrendingUp,
-  "zap": Zap,
-  "clock": Clock,
-};
+interface WearableMetricRow {
+  metric_date: string;
+  provider: string;
+  sleep_duration: number | null;
+  sleep_quality: number | null;
+  hrv: number | null;
+  resting_heart_rate: number | null;
+  daily_steps: number | null;
+  active_calories: number | null;
+}
+
+interface SystemicRecoveryRow {
+  readiness_score: number;
+  recovery_tier: string;
+}
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -77,6 +82,73 @@ export default async function DashboardPage() {
     .single() as { data: { onboarding_complete: boolean } | null };
 
   if (!profile?.onboarding_complete) redirect("/onboarding");
+
+  // Derive display name from OAuth metadata or email
+  const meta = user.user_metadata ?? {};
+  const firstName = ((meta.full_name || meta.name || user.email || "there") as string)
+    .split(" ")[0];
+
+  // Fetch most recent wearable health snapshot (last 7 days, most recent row)
+  const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+    .toISOString()
+    .split("T")[0];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: latestWearable } = await (supabase as any)
+    .from("wearable_health_metrics")
+    .select("metric_date, provider, sleep_duration, sleep_quality, hrv, resting_heart_rate, daily_steps, active_calories")
+    .eq("user_id", user.id)
+    .gte("metric_date", sevenDaysAgo)
+    .order("metric_date", { ascending: false })
+    .limit(1)
+    .maybeSingle() as { data: WearableMetricRow | null };
+
+  // Fetch readiness score from systemic_recovery (computed by recovery engine)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: systemicRecovery } = await (supabase as any)
+    .from("systemic_recovery")
+    .select("readiness_score, recovery_tier")
+    .eq("user_id", user.id)
+    .order("updated_at", { ascending: false })
+    .limit(1)
+    .maybeSingle() as { data: SystemicRecoveryRow | null };
+
+  // Fetch last 14 days of sleep from wearables for the chart
+  const fourteenDaysAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000)
+    .toISOString()
+    .split("T")[0];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: sleepRows } = await (supabase as any)
+    .from("wearable_health_metrics")
+    .select("metric_date, sleep_duration")
+    .eq("user_id", user.id)
+    .not("sleep_duration", "is", null)
+    .gte("metric_date", fourteenDaysAgo)
+    .order("metric_date", { ascending: true }) as { data: Array<{ metric_date: string; sleep_duration: number }> | null };
+
+  // Format sleep chart data — real wearable data when available, else fall back to mock
+  const sleepChartData = sleepRows && sleepRows.length > 0
+    ? sleepRows.map((r) => ({
+        date: new Date(r.metric_date + "T00:00:00").toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+        }),
+        hours: r.sleep_duration,
+      }))
+    : mockSleepData;
+  const hasRealSleepData = sleepRows && sleepRows.length > 0;
+
+  const wearableSnapshot: WearableSnapshot | null = latestWearable
+    ? {
+        sleep_duration: latestWearable.sleep_duration,
+        sleep_quality: latestWearable.sleep_quality,
+        hrv: latestWearable.hrv,
+        resting_heart_rate: latestWearable.resting_heart_rate,
+        daily_steps: latestWearable.daily_steps,
+        active_calories: latestWearable.active_calories,
+        provider: latestWearable.provider,
+      }
+    : null;
+
   return (
     <PageContainer>
       {/* Header */}
@@ -85,7 +157,7 @@ export default async function DashboardPage() {
           <div>
             <div className="flex items-center gap-2 mb-1">
               <h1 className="text-2xl font-bold text-foreground tracking-tight">
-                {getGreeting()}, Alex
+                {getGreeting()}, {firstName}
               </h1>
             </div>
             <div className="flex items-center gap-2 flex-wrap">
@@ -99,7 +171,11 @@ export default async function DashboardPage() {
 
       {/* Hero Metrics */}
       <SectionContainer title="Today's Overview">
-        <MetricsOverview metrics={mockMetrics} />
+        <MetricsOverview
+          metrics={mockMetrics}
+          wearableSnapshot={wearableSnapshot}
+          readinessScore={systemicRecovery?.readiness_score ?? null}
+        />
       </SectionContainer>
 
       {/* Nutrition Widget */}
@@ -149,11 +225,15 @@ export default async function DashboardPage() {
             </div>
           </SectionCard>
 
-          <SectionCard title="Sleep Duration" subtitle="Last 14 days" padding={false}>
+          <SectionCard
+            title="Sleep Duration"
+            subtitle={hasRealSleepData ? `Last ${sleepChartData.length} days · wearable` : "Last 14 days"}
+            padding={false}
+          >
             <div className="px-5 pb-5 pt-1">
               <ChartPlaceholder
                 type="line"
-                data={mockSleepData}
+                data={sleepChartData}
                 dataKey="hours"
                 color="primary"
                 height={130}

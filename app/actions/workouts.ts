@@ -7,6 +7,7 @@ import { getSystemicRecovery } from "@/services/recovery";
 import { getMuscleStates } from "@/services/muscles";
 import { MIN_MUSCLE_RECOVERY_TO_TRAIN } from "@/lib/training/constants";
 import { fetchWgerExercises } from "@/lib/wger/client";
+import { getCurrentUserRole } from "@/lib/saas/rbac";
 import type { GeneratorInput, SplitType, WorkoutDay } from "@/lib/training/types";
 import type { MuscleGroup } from "@/lib/recovery/types";
 
@@ -63,14 +64,8 @@ export async function syncWgerExercises(): Promise<{ success: boolean; count?: n
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return { success: false, error: "Unauthorized" };
 
-    // Simple admin check — in production, use proper role/permission system
-    const { data: profile } = await (supabase as any)
-      .from("profiles")
-      .select("email")
-      .eq("user_id", user.id)
-      .single();
-
-    if (!profile?.email?.includes("admin")) {
+    const role = await getCurrentUserRole();
+    if (role !== "admin") {
       return { success: false, error: "Admin only" };
     }
 

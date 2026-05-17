@@ -38,7 +38,7 @@ export async function fetchWgerExercises(limit = 100): Promise<WgerExercise[]> {
   while (hasMore) {
     const url = `${WGER_API}/exercise?limit=${limit}&offset=${offset}&language=2`;
     try {
-      const res = await fetch(url, { next: { revalidate: 86400 } }); // cache 24h
+      const res = await fetch(url, { cache: "no-store" });
       if (!res.ok) break;
 
       const data = await res.json();
@@ -59,7 +59,7 @@ export async function fetchWgerExercises(limit = 100): Promise<WgerExercise[]> {
 export async function fetchWgerEquipment(): Promise<WgerEquipment[]> {
   try {
     const res = await fetch(`${WGER_API}/equipment?limit=100`, {
-      next: { revalidate: 86400 },
+      cache: "no-store",
     });
     if (!res.ok) return [];
     const data = await res.json();
@@ -72,7 +72,7 @@ export async function fetchWgerEquipment(): Promise<WgerEquipment[]> {
 export async function fetchWgerMuscles(): Promise<WgerMuscle[]> {
   try {
     const res = await fetch(`${WGER_API}/muscle?limit=100`, {
-      next: { revalidate: 86400 },
+      cache: "no-store",
     });
     if (!res.ok) return [];
     const data = await res.json();
