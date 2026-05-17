@@ -16,12 +16,11 @@ import {
   CARB_VOLUME_SCALARS,
   HYDRATION_MULTIPLIER,
   MINIMUM_DAILY_FIBER,
-  ADHERENCE_TOLERANCE,
   ADHERENCE_WEIGHTS,
-  CONSISTENCY_THRESHOLD,
   BMR_COEFFICIENTS,
   MACRO_CALORIES,
 } from "@/lib/nutrition/constants";
+import { calculateNutritionRecoveryModifier } from "@/lib/nutrition/adherence";
 
 /**
  * Calculate Basal Metabolic Rate using Mifflin-St Jeor formula
@@ -80,15 +79,16 @@ export function calculateMacroTargets(
   const protein_g = Math.round(weight_kg * macro_spec.protein_max);
   const fat_g = Math.round(weight_kg * macro_spec.fat_max);
 
-  // Carbs: remainder of calories after protein and fat
+  // Carbs: remainder of calories after protein and fat. Clamp to >=0 so
+  // aggressive cuts with high protein never produce negative carb targets.
   const protein_calories = protein_g * MACRO_CALORIES.protein;
   const fat_calories = fat_g * MACRO_CALORIES.fat;
-  const carb_calories = calorie_target - protein_calories - fat_calories;
+  const carb_calories = Math.max(0, calorie_target - protein_calories - fat_calories);
   let carbs_g = Math.round(carb_calories / MACRO_CALORIES.carbs);
 
   // Scale carbs based on training volume
   const carb_scalar = CARB_VOLUME_SCALARS[training_volume];
-  carbs_g = Math.round(carbs_g * carb_scalar);
+  carbs_g = Math.max(0, Math.round(carbs_g * carb_scalar));
 
   // Recalculate calories based on actual macro targets
   const actual_calories = Math.round(
@@ -141,9 +141,7 @@ export function calculateDailyAdherence(
   summary: DailyNutritionSummary,
   goals: NutritionGoals
 ): MacroAdherence {
-  const tolerance = ADHERENCE_TOLERANCE;
-
-  // Calculate adherence as percentage of goal (with ±tolerance window)
+  // Calculate adherence as percentage of goal
   const protein_adherence = Math.min(100, Math.round((summary.protein_g / goals.protein_target) * 100));
   const calorie_adherence = Math.min(100, Math.round((summary.calories / goals.calorie_target) * 100));
   const carb_adherence = Math.min(100, Math.round((summary.carbs_g / goals.carb_target) * 100));
@@ -217,29 +215,14 @@ export function calculateWeeklyAdherence(
 }
 
 /**
- * Determine if nutrition is sufficient (for recovery modifier)
+ * Determine if nutrition is sufficient (for recovery modifier).
+ * Thin alias over the canonical implementation in lib/nutrition/adherence
+ * so workout-finalize and readiness paths use identical logic.
  * @param weeklyAdherence 7-day adherence scores
  * @returns Recovery modifier (-10 to +5)
  */
 export function calculateRecoveryModifier(weeklyAdherence: WeeklyNutritionAdherence): number {
-  const { protein_adherence, calorie_adherence, overall_score } = weeklyAdherence;
-
-  // Check specific negative conditions first (highest severity)
-  // Under-eating → -10 readiness (insufficient energy)
-  if (calorie_adherence < 80) return -10;
-
-  // Over-eating (sluggish, slow digestion) → -3 readiness
-  if (calorie_adherence > 130) return -3;
-
-  // Low protein → -5 readiness (impairs muscle recovery)
-  if (protein_adherence < 80) return -5;
-
-  // Then check overall performance for positive/neutral modifiers
-  // Excellent nutrition → +5 readiness
-  if (overall_score > 90) return 5;
-
-  // Good to moderate nutrition → 0
-  return 0;
+  return calculateNutritionRecoveryModifier(weeklyAdherence);
 }
 
 /**

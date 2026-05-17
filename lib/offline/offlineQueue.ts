@@ -17,12 +17,13 @@ export type QueueAction =
   | { type: "update_profile"; payload: Record<string, unknown> }
   | { type: "update_workout"; payload: Record<string, unknown> };
 
-// Route each action type to its API endpoint
+// Route each action type to its API endpoint.
+// Must match real route filenames: app/api/workouts/session, app/api/nutrition/logs, etc.
 const ACTION_ENDPOINTS: Record<string, string> = {
-  log_workout: "/api/workouts/sessions",
-  log_nutrition: "/api/nutrition/log",
-  update_profile: "/api/profile",
-  update_workout: "/api/workouts/sessions",
+  log_workout: "/api/workouts/session",
+  log_nutrition: "/api/nutrition/logs",
+  update_profile: "/api/settings/preferences",
+  update_workout: "/api/workouts/session",
 };
 
 function makeIdempotencyKey(type: string, payload: Record<string, unknown>): string {

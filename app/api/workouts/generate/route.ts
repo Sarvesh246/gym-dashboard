@@ -4,6 +4,7 @@ import { saveGeneratedWorkout } from "@/services/workouts";
 import { getSystemicRecovery } from "@/services/recovery";
 import { getMuscleStates } from "@/services/muscles";
 import { MIN_MUSCLE_RECOVERY_TO_TRAIN } from "@/lib/training/constants";
+import { applyMuscleDecay } from "@/lib/recovery/decay";
 import type { GeneratorInput, SplitType, WorkoutDay, DifficultyTier, TrainingGoal } from "@/lib/training/types";
 import type { MuscleGroup } from "@/lib/recovery/types";
 
@@ -46,9 +47,12 @@ export async function POST(req: Request): Promise<Response> {
 
     const systemicReadiness = systemic?.readiness_score ?? 70;
 
+    // Apply time-decay so stale stored scores don't permanently lock a muscle
+    // out of training. A muscle written at 30/100 a week ago has actually
+    // recovered by now; the stored row is just a snapshot.
     const availableMuscles: MuscleGroup[] = muscleStates.length > 0
       ? muscleStates
-          .filter((ms) => ms.recovery_score >= MIN_MUSCLE_RECOVERY_TO_TRAIN)
+          .filter((ms) => applyMuscleDecay(ms).recovery_score >= MIN_MUSCLE_RECOVERY_TO_TRAIN)
           .map((ms) => ms.muscle_group)
       : ([] as MuscleGroup[]); // empty = use all (no training data yet)
 

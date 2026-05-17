@@ -4,7 +4,7 @@
  */
 
 import type { ReadinessInput, ReadinessOutput } from "@/lib/recovery/types";
-import { calculateReadiness } from "@/lib/recovery/scoring";
+import { calculateReadiness, classifyRecoveryTier } from "@/lib/recovery/scoring";
 import { buildRecoveryContextWithWearables } from "./recovery-enhancement";
 import { applyWearableReadinessAdjustment } from "./recovery-enhancement";
 import type { RecoveryConfidenceContext } from "@/lib/health/types";
@@ -51,7 +51,7 @@ export async function calculateEnhancedReadiness(
     Math.abs(wearableAdjustedScore - base.readiness_score) >= 2
   ) {
     finalScore = wearableAdjustedScore;
-    finalTier = calculateRecoveryTier(wearableAdjustedScore);
+    finalTier = classifyRecoveryTier(wearableAdjustedScore);
   }
 
   return {
@@ -63,17 +63,6 @@ export async function calculateEnhancedReadiness(
     base_score: base.readiness_score,
     confidence_multiplier: confidenceContext.confidence_multiplier,
   };
-}
-
-/**
- * Re-classify recovery tier based on new score
- */
-function calculateRecoveryTier(score: number) {
-  const s = Math.max(0, Math.min(100, score));
-  if (s >= 75) return "green";
-  if (s >= 50) return "yellow";
-  if (s >= 25) return "orange";
-  return "red";
 }
 
 /**

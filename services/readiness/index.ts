@@ -118,7 +118,10 @@ export async function computeReadiness(userId: string): Promise<ReadinessOutput>
   });
 
   // 10. Persist recovery snapshot for trend analysis (NEW)
-  await persistRecoverySnapshot(userId, today, adjusted_result, strainAccumulation);
+  await persistRecoverySnapshot(userId, today, adjusted_result, strainAccumulation, {
+    systemic_fatigue,
+    avg_muscle_recovery: avgMuscleRecovery,
+  });
 
   return adjusted_result;
 }
@@ -205,7 +208,8 @@ export async function persistRecoverySnapshot(
   userId: string,
   date: string,
   readinessOutput: ReadinessOutput,
-  weeklyStrain: number
+  weeklyStrain: number,
+  context?: { systemic_fatigue: number; avg_muscle_recovery: number }
 ): Promise<RecoverySnapshot | null> {
   try {
     const supabase = await createClient();
@@ -213,8 +217,8 @@ export async function persistRecoverySnapshot(
       user_id: userId,
       snapshot_date: date,
       readiness_score: readinessOutput.readiness_score,
-      systemic_fatigue: 0,  // TODO: get from current systemic state
-      avg_muscle_recovery: 0,  // TODO: get from muscle states average
+      systemic_fatigue: Math.round(context?.systemic_fatigue ?? 0),
+      avg_muscle_recovery: Math.round(context?.avg_muscle_recovery ?? 0),
       recovery_tier: readinessOutput.tier,
       training_recommendation: readinessOutput.training_recommendation,
       weekly_strain_accumulation: weeklyStrain,

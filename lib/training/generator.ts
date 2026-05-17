@@ -12,9 +12,9 @@ import {
   SETS_PER_EXERCISE,
   COMPOUND_PATTERNS,
   READINESS_GATES,
-  MIN_MUSCLE_RECOVERY_TO_TRAIN,
   DEFAULT_PROGRESSION_TYPE,
   WORKOUT_DAY_LABELS,
+  SPLIT_DAYS,
 } from "./constants";
 import {
   getAllExercises,
@@ -222,7 +222,6 @@ export function getWeekSchedule(
   split_type: import("./types").SplitType,
   days_per_week: number
 ): WorkoutDay[] {
-  const { SPLIT_DAYS } = require("./constants") as typeof import("./constants");
   const available = SPLIT_DAYS[split_type];
   if (available.length === 0) return [];
 
