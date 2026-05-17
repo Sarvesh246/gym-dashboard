@@ -195,6 +195,20 @@ export async function deleteWorkout(workoutId: string, userId: string): Promise<
 
 // ─── Session (logged_workouts) ────────────────────────────────────────────────
 
+export async function deleteLoggedWorkout(sessionId: string, userId: string): Promise<boolean> {
+  try {
+    const supabase = await createClient();
+    const { error } = await (supabase as any)
+      .from("logged_workouts")
+      .delete()
+      .eq("id", sessionId)
+      .eq("user_id", userId);
+    return !error;
+  } catch {
+    return false;
+  }
+}
+
 export async function createLoggedWorkout(
   userId: string,
   workoutId: string | null,

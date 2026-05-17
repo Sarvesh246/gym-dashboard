@@ -3,6 +3,7 @@ import {
   getLoggedWorkoutWithSets,
   finalizeLoggedWorkout,
   upsertLoggedSet,
+  deleteLoggedWorkout,
 } from "@/services/workouts";
 import { updateAllExercisePerformances } from "@/services/performance";
 import { persistStrainLog, upsertSystemicRecovery, getSystemicRecovery } from "@/services/recovery";
@@ -165,4 +166,18 @@ export async function PATCH(
     console.error("[PATCH /api/workouts/session/:id]", err);
     return Response.json({ error: "Failed to finalize session" }, { status: 500 });
   }
+}
+
+// DELETE — remove a logged session
+export async function DELETE(
+  _req: Request,
+  { params }: { params: Promise<{ id: string }> }
+): Promise<Response> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
+
+  const { id } = await params;
+  const ok = await deleteLoggedWorkout(id, user.id);
+  return Response.json({ success: ok });
 }

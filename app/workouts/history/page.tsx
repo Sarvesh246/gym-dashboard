@@ -6,6 +6,7 @@ import { SectionCard } from "@/components/ui/SectionCard";
 import { getRecentLoggedWorkouts } from "@/services/workouts";
 import { ArrowLeft, Dumbbell, Clock, Star } from "lucide-react";
 import Link from "next/link";
+import { DeleteSessionButton } from "@/components/workouts/DeleteSessionButton";
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString("en-US", {
@@ -59,7 +60,7 @@ export default async function WorkoutHistoryPage() {
                   <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
                     <Dumbbell size={16} className="text-primary" />
                   </div>
-                  <div className="flex-1 min-w-0">
+                  <div className="flex-1 min-w-0 flex flex-col">
                     <p className="text-sm font-semibold text-foreground">
                       {formatDate(s.performed_at)}
                     </p>
@@ -93,6 +94,9 @@ export default async function WorkoutHistoryPage() {
                           Energy: {s.energy_rating}/5
                         </span>
                       )}
+                    </div>
+                    <div className="mt-2">
+                      <DeleteSessionButton sessionId={s.id} />
                     </div>
                   </div>
                 </div>
