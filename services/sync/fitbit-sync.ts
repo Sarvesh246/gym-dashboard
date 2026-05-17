@@ -13,7 +13,6 @@ import {
 import {
   getWearableConnection,
   upsertWearableConnection,
-  isProviderConnected,
   storeHealthMetrics,
 } from "@/services/wearables";
 import {
@@ -249,9 +248,12 @@ export async function syncFitbitData(
  * Manual sync trigger (for "sync now" button)
  */
 export async function triggerManualFitbitSync(userId: string): Promise<SyncResult> {
-  // Check if provider is connected
-  const isConnected = await isProviderConnected(userId, "fitbit");
-  if (!isConnected) {
+  const connection = await getWearableConnection(userId, "fitbit");
+  const hasUsableToken =
+    connection?.connection_status === "connected" &&
+    (connection.refresh_token || connection.access_token);
+
+  if (!hasUsableToken) {
     return {
       provider: "fitbit",
       user_id: userId,
