@@ -3,30 +3,24 @@ import { createClient } from "@/lib/supabase/server";
 import type { WearableProvider } from "@/lib/wearables/providers";
 import {
   generateGarminAuthUrl,
-  getGarminConfig,
 } from "@/services/wearables/garmin";
 import {
   generateAppleHealthAuthUrl,
-  getAppleHealthConfig,
 } from "@/services/wearables/apple";
 import {
   generateFitbitAuthUrl,
-  getFitbitConfig,
 } from "@/services/wearables/fitbit";
 import {
   generatePolarAuthUrl,
-  getPolarConfig,
 } from "@/services/wearables/polar";
 import {
   generateWahooAuthUrl,
-  getWahooConfig,
 } from "@/services/wearables/wahoo";
 import { handleGarminCallback } from "@/services/sync/garmin-sync";
 import { handleFitbitCallback } from "@/services/sync/fitbit-sync";
 import { handleAppleHealthCallback } from "@/services/sync/apple-sync";
 import { handlePolarCallback } from "@/services/sync/polar-sync";
 import { handleWahooCallback } from "@/services/sync/wahoo-sync";
-import { upsertWearableConnection } from "@/services/wearables";
 
 const SUPPORTED_PROVIDERS: WearableProvider[] = [
   "garmin",
@@ -73,29 +67,89 @@ export async function POST(request: NextRequest) {
       try {
         switch (typedProvider) {
           case "garmin": {
-            const authUrl = generateGarminAuthUrl(state);
-            return NextResponse.json({ authUrl });
+            try {
+              const authUrl = generateGarminAuthUrl(state);
+              return NextResponse.json({ authUrl });
+            } catch (err) {
+              return NextResponse.json(
+                {
+                  error:
+                    err instanceof Error
+                      ? err.message
+                      : "Garmin OAuth not configured on server",
+                },
+                { status: 500 }
+              );
+            }
           }
           case "apple_health": {
-            const authUrl = generateAppleHealthAuthUrl(state);
-            return NextResponse.json({ authUrl });
+            try {
+              const authUrl = generateAppleHealthAuthUrl(state);
+              return NextResponse.json({ authUrl });
+            } catch (err) {
+              return NextResponse.json(
+                {
+                  error:
+                    err instanceof Error
+                      ? err.message
+                      : "Apple Health OAuth not configured on server",
+                },
+                { status: 500 }
+              );
+            }
           }
           case "fitbit": {
-            const authUrl = generateFitbitAuthUrl(state);
-            return NextResponse.json({ authUrl });
+            try {
+              const authUrl = generateFitbitAuthUrl(state);
+              return NextResponse.json({ authUrl });
+            } catch (err) {
+              return NextResponse.json(
+                {
+                  error:
+                    err instanceof Error
+                      ? err.message
+                      : "Fitbit OAuth not configured on server",
+                },
+                { status: 500 }
+              );
+            }
           }
           case "polar": {
-            const authUrl = generatePolarAuthUrl(state);
-            return NextResponse.json({ authUrl });
+            try {
+              const authUrl = generatePolarAuthUrl(state);
+              return NextResponse.json({ authUrl });
+            } catch (err) {
+              return NextResponse.json(
+                {
+                  error:
+                    err instanceof Error
+                      ? err.message
+                      : "Polar OAuth not configured on server",
+                },
+                { status: 500 }
+              );
+            }
           }
           case "wahoo": {
-            const authUrl = generateWahooAuthUrl(state);
-            return NextResponse.json({ authUrl });
+            try {
+              const authUrl = generateWahooAuthUrl(state);
+              return NextResponse.json({ authUrl });
+            } catch (err) {
+              return NextResponse.json(
+                {
+                  error:
+                    err instanceof Error
+                      ? err.message
+                      : "Wahoo OAuth not configured on server",
+                },
+                { status: 500 }
+              );
+            }
           }
         }
       } catch (err) {
         const message =
-          err instanceof Error ? err.message : "Failed to generate auth URL";
+          err instanceof Error ? err.message : "Failed to get authorization URL";
         return NextResponse.json(
           { error: message },
           { status: 500 }
@@ -114,12 +168,6 @@ export async function POST(request: NextRequest) {
       }
 
       try {
-        let tokenData: {
-          access_token: string;
-          refresh_token?: string;
-          expires_in: number;
-        } | null = null;
-
         switch (typedProvider) {
           case "garmin": {
             const success = await handleGarminCallback(user.id, code);

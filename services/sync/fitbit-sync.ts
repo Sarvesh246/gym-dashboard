@@ -96,6 +96,9 @@ export async function getFreshFitbitToken(userId: string): Promise<string | null
         await upsertWearableConnection(userId, "fitbit", {
           access_token: newToken.access_token,
           token_expiry: newExpiry.toISOString(),
+          ...(newToken.refresh_token
+            ? { refresh_token: newToken.refresh_token }
+            : {}),
         });
 
         return newToken.access_token;

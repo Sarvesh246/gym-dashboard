@@ -24,19 +24,19 @@ const PROVIDER_LABELS: Record<string, string> = {
   wahoo: "Wahoo",
 };
 
+const PROVIDER_NOTES: Partial<Record<WearableProvider, string>> = {
+  fitbit:
+    "Connects via Google sign-in and the Google Health API (Fitbit data synced to your Google account).",
+};
+
 export function WearablesSection() {
   const [statuses, setStatuses] = useState<ProviderStatus[]>([]);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchStatus();
-  }, []);
-
-  const fetchStatus = async () => {
+  async function fetchStatus() {
     try {
-      setLoading(true);
       setError(null);
       const response = await fetch("/api/wearables/status");
       if (!response.ok) throw new Error("Failed to fetch status");
@@ -48,7 +48,15 @@ export function WearablesSection() {
     } finally {
       setLoading(false);
     }
-  };
+  }
+
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      void fetchStatus();
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
+  }, []);
 
   const handleConnect = async (provider: WearableProvider) => {
     try {
@@ -59,14 +67,18 @@ export function WearablesSection() {
         body: JSON.stringify({ provider, action: "authorize" }),
       });
 
-      if (!response.ok) throw new Error("Failed to get authorization URL");
       const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to get authorization URL");
+      }
 
       if (data.authUrl) {
-        window.location.href = data.authUrl;
+        window.location.assign(data.authUrl);
       }
     } catch (err) {
-      setError(`Failed to connect ${provider}`);
+      setError(
+        err instanceof Error ? err.message : `Failed to connect ${provider}`
+      );
       console.error(err);
     }
   };
@@ -131,6 +143,11 @@ export function WearablesSection() {
             >
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-foreground">{label}</p>
+                {PROVIDER_NOTES[key as WearableProvider] && (
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {PROVIDER_NOTES[key as WearableProvider]}
+                  </p>
+                )}
                 {isConnected && daysSince !== null && (
                   <p className="text-xs text-muted-foreground mt-1">
                     {daysSince === 0

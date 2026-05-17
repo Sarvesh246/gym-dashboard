@@ -63,7 +63,7 @@ export const PROVIDER_REGISTRY: Record<WearableProvider, ProviderMetadata> = {
   },
   fitbit: {
     name: "Fitbit",
-    description: "Fitbit wearables and trackers",
+    description: "Fitbit data via Google Health API",
     implemented: true,
     supportedMetrics: [
       "sleep_duration",
