@@ -25,12 +25,16 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   const limit = Math.min(Number(searchParams.get("limit") ?? 100), 500);
   const offset = Number(searchParams.get("offset") ?? 0);
 
-  const [features, { overrides, total }] = await Promise.all([
-    listFeatures(),
-    listFeatureOverrides({ limit, offset }),
-  ]);
-
-  return NextResponse.json({ features, overrides, total });
+  try {
+    const [features, { overrides, total }] = await Promise.all([
+      listFeatures(),
+      listFeatureOverrides({ limit, offset }),
+    ]);
+    return NextResponse.json({ features, overrides, total });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : "Internal error";
+    return NextResponse.json({ error: msg }, { status: 500 });
+  }
 }
 
 export async function POST(req: NextRequest): Promise<NextResponse> {

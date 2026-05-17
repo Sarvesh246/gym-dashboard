@@ -5,6 +5,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { isAdminEmail } from "@/lib/saas/rbac";
 
 export async function GET(req: NextRequest): Promise<NextResponse> {
@@ -18,8 +19,9 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   const limit = Math.min(Number(searchParams.get("limit") ?? 50), 200);
   const offset = Number(searchParams.get("offset") ?? 0);
 
-  // auth.users is accessible only via service role — use admin API via supabase-js
-  const { data, error } = await (supabase as any).auth.admin.listUsers({
+  // auth.users requires service role — use the admin client, not the publishable-key client
+  const adminClient = createAdminClient();
+  const { data, error } = await adminClient.auth.admin.listUsers({
     page: Math.floor(offset / limit) + 1,
     perPage: limit,
   });

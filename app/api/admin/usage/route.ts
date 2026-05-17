@@ -33,9 +33,14 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   const summary = searchParams.get("summary") === "true";
 
   if (summary) {
-    const days = Number(searchParams.get("days") ?? 30);
-    const data = await getUsageSummary(days);
-    return NextResponse.json({ summary: data });
+    try {
+      const days = Number(searchParams.get("days") ?? 30);
+      const data = await getUsageSummary(days);
+      return NextResponse.json({ summary: data });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Internal error";
+      return NextResponse.json({ error: msg }, { status: 500 });
+    }
   }
 
   const limit = Math.min(Number(searchParams.get("limit") ?? 100), 500);
@@ -43,6 +48,11 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   const eventType = searchParams.get("eventType") ?? undefined;
   const since = parseSince(searchParams.get("since"));
 
-  const { events, total } = await getRecentUsageEvents({ limit, offset, eventType, since });
-  return NextResponse.json({ events, total, limit, offset });
+  try {
+    const { events, total } = await getRecentUsageEvents({ limit, offset, eventType, since });
+    return NextResponse.json({ events, total, limit, offset });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : "Internal error";
+    return NextResponse.json({ error: msg }, { status: 500 });
+  }
 }
