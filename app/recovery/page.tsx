@@ -9,15 +9,11 @@ import { ReadinessCard } from "@/components/recovery/ReadinessCard";
 import { MuscleStateGrid } from "@/components/recovery/MuscleStateGrid";
 import { RecommendationsList } from "@/components/recovery/RecommendationsList";
 import { WearableStatusCard } from "@/components/recovery/WearableStatusCard";
-import { mockSleepData, mockHRVData } from "@/lib/mock-data";
 import {
   getSystemicRecovery,
-  computeSystemicRecoveryFromProfile,
 } from "@/services/recovery";
 import { getBodyMapData } from "@/services/muscles";
 import { computeReadiness, getProfileModifiers } from "@/services/readiness";
-import type { BodyMapData, ReadinessOutput } from "@/lib/recovery/types";
-import { SLEEP_QUALITY_SCORE } from "@/lib/recovery/constants";
 
 export default async function RecoveryPage() {
   const supabase = await createClient();
@@ -26,38 +22,57 @@ export default async function RecoveryPage() {
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  // ── Fetch recovery data (all fallback-safe) ──────────────────────────────────
-  const [systemic, bodyMap, readiness, profileModifiers] = await Promise.all([
+  const fourteenDaysAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
+
+  // ── Fetch recovery data (real or empty — no synthetic fallbacks) ─────────────
+  const [systemic, bodyMap, readiness, profileModifiers, wearableResult, wearableHistoryResult] = await Promise.all([
     getSystemicRecovery(user.id),
     getBodyMapData(user.id),
     computeReadiness(user.id),
     getProfileModifiers(user.id),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (supabase as any)
+      .from("wearable_health_metrics")
+      .select("sleep_quality, hrv, resting_heart_rate, metric_date")
+      .eq("user_id", user.id)
+      .order("metric_date", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (supabase as any)
+      .from("wearable_health_metrics")
+      .select("metric_date, sleep_duration, hrv")
+      .eq("user_id", user.id)
+      .gte("metric_date", fourteenDaysAgo)
+      .order("metric_date", { ascending: true }),
   ]);
 
-  const readinessScore = Math.round(readiness.readiness_score);
-  const sleepScore     = profileModifiers.sleep_quality_score;
-  // Derive an approximate HRV value (normalised score → ms estimate)
-  const estimatedHRV   = Math.round(40 + (sleepScore / 100) * 30);
-  const restingHR      = 62;
+  const latestWearable = (wearableResult as {
+    data: { sleep_quality: number | null; hrv: number | null; resting_heart_rate: number | null } | null;
+  }).data;
+  const wearableHistory = ((wearableHistoryResult as {
+    data: Array<{ metric_date: string; sleep_duration: number | null; hrv: number | null }> | null;
+  }).data) ?? [];
 
-  // Fallback body map when tables are empty (pre-migration)
-  const bodyMapDisplay: BodyMapData =
-    Object.keys(bodyMap).length > 0
-      ? bodyMap
-      : {
-          chest:       { recovery_score: 91, fatigue_score: 9,  strain_score: 8,  soreness_score: 5,  tier: "green",  last_trained_at: null, weekly_frequency: 0, weekly_volume: 0 },
-          front_delts: { recovery_score: 50, fatigue_score: 50, strain_score: 45, soreness_score: 38, tier: "orange", last_trained_at: null, weekly_frequency: 0, weekly_volume: 0 },
-          biceps:      { recovery_score: 88, fatigue_score: 12, strain_score: 10, soreness_score: 8,  tier: "green",  last_trained_at: null, weekly_frequency: 0, weekly_volume: 0 },
-          core:        { recovery_score: 67, fatigue_score: 33, strain_score: 28, soreness_score: 22, tier: "yellow", last_trained_at: null, weekly_frequency: 0, weekly_volume: 0 },
-          quads:       { recovery_score: 81, fatigue_score: 19, strain_score: 16, soreness_score: 12, tier: "green",  last_trained_at: null, weekly_frequency: 0, weekly_volume: 0 },
-          calves:      { recovery_score: 90, fatigue_score: 10, strain_score: 8,  soreness_score: 5,  tier: "green",  last_trained_at: null, weekly_frequency: 0, weekly_volume: 0 },
-          lats:        { recovery_score: 75, fatigue_score: 25, strain_score: 22, soreness_score: 18, tier: "yellow", last_trained_at: null, weekly_frequency: 0, weekly_volume: 0 },
-          upper_back:  { recovery_score: 78, fatigue_score: 22, strain_score: 20, soreness_score: 15, tier: "yellow", last_trained_at: null, weekly_frequency: 0, weekly_volume: 0 },
-          glutes:      { recovery_score: 82, fatigue_score: 18, strain_score: 15, soreness_score: 12, tier: "green",  last_trained_at: null, weekly_frequency: 0, weekly_volume: 0 },
-          hamstrings:  { recovery_score: 84, fatigue_score: 16, strain_score: 14, soreness_score: 10, tier: "green",  last_trained_at: null, weekly_frequency: 0, weekly_volume: 0 },
-          triceps:     { recovery_score: 79, fatigue_score: 21, strain_score: 18, soreness_score: 14, tier: "yellow", last_trained_at: null, weekly_frequency: 0, weekly_volume: 0 },
-          side_delts:  { recovery_score: 72, fatigue_score: 28, strain_score: 25, soreness_score: 20, tier: "yellow", last_trained_at: null, weekly_frequency: 0, weekly_volume: 0 },
-        };
+  const sleepChartData = wearableHistory
+    .filter((r) => r.sleep_duration != null)
+    .map((r) => ({
+      date: new Date(r.metric_date + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+      hours: r.sleep_duration as number,
+    }));
+  const hrvChartData = wearableHistory
+    .filter((r) => r.hrv != null)
+    .map((r) => ({
+      date: new Date(r.metric_date + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+      value: r.hrv as number,
+    }));
+
+  const readinessScore = Math.round(readiness.readiness_score);
+  // Sleep score: prefer logged wearable data, else profile-derived (treated as estimate)
+  const sleepScore   = latestWearable?.sleep_quality ?? profileModifiers.sleep_quality_score;
+  const hrvScore     = latestWearable?.hrv ?? null;
+  const restingHR    = latestWearable?.resting_heart_rate ?? null;
+  const hasBodyMapData = Object.keys(bodyMap).length > 0;
 
   // Readiness breakdown items derived from computed scores
   const readinessBreakdown = [
@@ -82,7 +97,7 @@ export default async function RecoveryPage() {
         <ReadinessCard
           readiness={readiness}
           sleepScore={sleepScore}
-          hrvScore={estimatedHRV}
+          hrvScore={hrvScore}
           restingHR={restingHR}
         />
       </SectionContainer>
@@ -100,24 +115,24 @@ export default async function RecoveryPage() {
           />
           <MetricCard
             label="Sleep Quality"
-            value={Math.round(sleepScore)}
-            unit="%"
+            value={sleepScore == null ? "—" : Math.round(sleepScore)}
+            unit={sleepScore == null ? undefined : "%"}
             icon="Moon"
             color="accent"
             animateValue
           />
           <MetricCard
-            label="Est. HRV"
-            value={estimatedHRV}
-            unit="ms"
+            label="HRV"
+            value={hrvScore == null ? "—" : Math.round(hrvScore)}
+            unit={hrvScore == null ? undefined : "ms"}
             icon="Heart"
             color="success"
             animateValue
           />
           <MetricCard
             label="Systemic Load"
-            value={Math.round(systemic?.systemic_fatigue ?? 30)}
-            unit="%"
+            value={systemic ? Math.round(systemic.systemic_fatigue ?? 0) : "—"}
+            unit={systemic ? "%" : undefined}
             icon="Brain"
             color="accent"
             animateValue
@@ -136,11 +151,12 @@ export default async function RecoveryPage() {
           <div className="px-5 pb-5 pt-1">
             <ChartPlaceholder
               type="line"
-              data={mockSleepData}
+              data={sleepChartData}
               dataKey="hours"
               color="primary"
               height={130}
               showXAxis
+              emptyLabel="Connect a wearable to see sleep history"
             />
           </div>
         </SectionCard>
@@ -149,11 +165,12 @@ export default async function RecoveryPage() {
           <div className="px-5 pb-5 pt-1">
             <ChartPlaceholder
               type="area"
-              data={mockHRVData}
+              data={hrvChartData}
               dataKey="value"
               color="success"
               height={130}
               showXAxis
+              emptyLabel="Connect a wearable to see HRV history"
             />
           </div>
         </SectionCard>
@@ -197,7 +214,15 @@ export default async function RecoveryPage() {
         </div>
 
         {/* Muscle recovery map */}
-        <MuscleStateGrid bodyMap={bodyMapDisplay} />
+        {hasBodyMapData ? (
+          <MuscleStateGrid bodyMap={bodyMap} />
+        ) : (
+          <SectionCard title="Muscle Recovery Map">
+            <div className="flex items-center justify-center min-h-[200px] text-sm text-muted-foreground text-center px-4">
+              Log a workout to start tracking per-muscle recovery.
+            </div>
+          </SectionCard>
+        )}
       </div>
     </PageContainer>
   );

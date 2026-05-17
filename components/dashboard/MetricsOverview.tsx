@@ -1,7 +1,6 @@
 "use client";
 
 import { MetricCard } from "@/components/ui/MetricCard";
-import type { mockMetrics } from "@/lib/mock-data";
 
 export interface WearableSnapshot {
   sleep_duration?: number | null;
@@ -13,17 +12,23 @@ export interface WearableSnapshot {
   provider?: string | null;
 }
 
+interface DashboardMetrics {
+  calories: { consumed: number; total: number; remaining: number };
+  protein:  { consumed: number; goal: number; unit: string };
+  workoutStatus: string;
+  hasNutritionGoals: boolean;
+}
+
 interface Props {
-  metrics: typeof mockMetrics;
+  metrics: DashboardMetrics;
   wearableSnapshot?: WearableSnapshot | null;
   readinessScore?: number | null;
 }
 
+const DASH = "—";
+
 export function MetricsOverview({ metrics, wearableSnapshot, readinessScore }: Props) {
-  const sleepHours = wearableSnapshot?.sleep_duration ?? metrics.sleep.hours;
-  const sleepScore = wearableSnapshot?.sleep_quality ?? metrics.sleep.score;
-  const recoveryScore = readinessScore ?? metrics.recoveryScore;
-  const hasWearableSleep = !!wearableSnapshot?.sleep_duration;
+  const hasWearableSleep    = wearableSnapshot?.sleep_duration != null;
   const hasWearableRecovery = readinessScore != null;
   const providerLabel = wearableSnapshot?.provider
     ? wearableSnapshot.provider.charAt(0).toUpperCase() + wearableSnapshot.provider.slice(1)
@@ -33,44 +38,39 @@ export function MetricsOverview({ metrics, wearableSnapshot, readinessScore }: P
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
       <MetricCard
         label="Recovery Score"
-        value={recoveryScore}
-        unit="%"
+        value={hasWearableRecovery ? readinessScore! : DASH}
+        unit={hasWearableRecovery ? "%" : undefined}
         icon="Zap"
         color="success"
-        trend="up"
-        trendLabel={hasWearableRecovery && providerLabel ? providerLabel : "+4"}
+        trendLabel={hasWearableRecovery && providerLabel ? providerLabel : undefined}
       />
       <MetricCard
         label="Calories Left"
-        value={metrics.calories.remaining}
-        unit="kcal"
+        value={metrics.hasNutritionGoals ? metrics.calories.remaining : DASH}
+        unit={metrics.hasNutritionGoals ? "kcal" : undefined}
         icon="Flame"
         color="accent"
-        trend="flat"
       />
       <MetricCard
         label="Protein"
-        value={metrics.protein.consumed}
-        unit="g"
-        secondaryValue={`of ${metrics.protein.goal}g goal`}
+        value={metrics.hasNutritionGoals ? metrics.protein.consumed : DASH}
+        unit={metrics.hasNutritionGoals ? "g" : undefined}
+        secondaryValue={metrics.hasNutritionGoals ? `of ${metrics.protein.goal}g goal` : undefined}
         icon="Beef"
         color="warning"
-        trend="down"
-        trendLabel="-38g"
       />
       <MetricCard
         label="Sleep"
-        value={sleepHours}
-        unit="h"
+        value={hasWearableSleep ? wearableSnapshot!.sleep_duration! : DASH}
+        unit={hasWearableSleep ? "h" : undefined}
         secondaryValue={
-          hasWearableSleep && providerLabel
-            ? `Score: ${sleepScore} · ${providerLabel}`
-            : `Score: ${sleepScore}`
+          hasWearableSleep
+            ? `Score: ${wearableSnapshot!.sleep_quality ?? DASH}${providerLabel ? ` · ${providerLabel}` : ""}`
+            : "Connect a wearable"
         }
         icon="Moon"
         color="success"
-        trend="up"
-        trendLabel={hasWearableSleep ? "Live" : "+0.4h"}
+        trendLabel={hasWearableSleep ? "Live" : undefined}
         animateValue
       />
       <MetricCard

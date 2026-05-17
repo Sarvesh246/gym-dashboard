@@ -2,7 +2,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { searchFoods } from "@/services/foods";
+import { lookupBarcode } from "@/services/foods";
 import { logFoodEntry, updateDailySummary } from "@/services/nutrition";
 
 export async function POST(req: NextRequest) {
@@ -18,18 +18,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Barcode string required" }, { status: 400 });
     }
 
-    // Search USDA for the barcode (often stored as product name)
-    // In a real app, you'd have a UPC database lookup, but USDA works for many products
-    const { foods } = await searchFoods(barcode_string, 1);
+    // OpenFoodFacts indexes products by UPC/EAN, USDA does not — use it for barcode lookup
+    const food = await lookupBarcode(String(barcode_string));
 
-    if (!foods || foods.length === 0) {
+    if (!food) {
       return NextResponse.json(
-        { error: "Food not found", query: barcode_string },
+        { error: "No product found for that barcode", query: barcode_string },
         { status: 404 }
       );
     }
-
-    const food = foods[0];
 
     // Auto-log with default serving size
     const today = new Date().toISOString().split("T")[0];

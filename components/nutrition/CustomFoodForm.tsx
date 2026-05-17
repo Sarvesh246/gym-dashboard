@@ -107,8 +107,8 @@ export default function CustomFoodForm({ isOpen, onClose, onCreated }: CustomFoo
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/60 z-50 flex items-end md:items-center justify-center p-4">
-      <div className="bg-card rounded-t-2xl md:rounded-2xl w-full md:max-w-md max-h-[90vh] flex flex-col">
+    <div className="fixed inset-0 bg-black/60 z-[60] flex items-end md:items-center justify-center p-0 md:p-4">
+      <div className="bg-card rounded-t-2xl md:rounded-2xl w-full md:max-w-md h-[85dvh] md:h-auto md:max-h-[85dvh] flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-4 border-b border-border flex-shrink-0">
           <h2 className="font-semibold text-foreground">Create Custom Food</h2>
@@ -121,7 +121,7 @@ export default function CustomFoodForm({ isOpen, onClose, onCreated }: CustomFoo
         </div>
 
         {/* Scrollable form */}
-        <div className="overflow-y-auto flex-1 p-4 space-y-4">
+        <div className="overflow-y-auto flex-1 p-4 space-y-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
           {error && (
             <div className="bg-destructive/10 border border-destructive/30 rounded-lg px-3 py-2 text-sm text-destructive">
               {error}

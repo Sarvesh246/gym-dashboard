@@ -233,7 +233,14 @@ export async function persistRecoverySnapshot(
       .single();
 
     if (error) {
-      console.error("[persistRecoverySnapshot] Error:", error.message);
+      // Missing table = migration 006 not yet applied — degrade silently
+      const missing =
+        error.code === "PGRST205" ||
+        error.code === "42P01" ||
+        /Could not find the table .* in the schema cache/i.test(error.message || "");
+      if (!missing) {
+        console.error("[persistRecoverySnapshot] Error:", error.message);
+      }
       return null;
     }
 

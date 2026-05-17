@@ -101,13 +101,21 @@ function NutritionPageContent() {
       setScannerOpen(false);
       if (res.ok) {
         loadData(selectedDate);
-      } else {
-        // Barcode found no match — open food logger for manual search
-        setLoggerOpen(true);
+        return;
       }
+      const data = await res.json().catch(() => ({}));
+      if (res.status === 404) {
+        alert(
+          `No product found for barcode "${barcode}". You can search by name or add it as a custom food.`
+        );
+      } else {
+        alert(data.error || "Barcode lookup failed.");
+      }
+      setLoggerOpen(true);
     } catch (err) {
       console.error("Barcode error:", err);
       setScannerOpen(false);
+      alert("Barcode lookup failed. Check your connection and try again.");
     }
   };
 

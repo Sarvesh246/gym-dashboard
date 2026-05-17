@@ -5,19 +5,13 @@ import dynamic from "next/dynamic";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { SectionContainer } from "@/components/layout/SectionContainer";
 import { SectionCard } from "@/components/ui/SectionCard";
-import { StatusChip } from "@/components/ui/StatusChip";
 import { ChartPlaceholder } from "@/components/ui/ChartPlaceholder";
 import { ThemeToggle } from "@/components/utility/ThemeToggle";
 import { MetricsOverview } from "@/components/dashboard/MetricsOverview";
 import type { WearableSnapshot } from "@/components/dashboard/MetricsOverview";
-import {
-  mockMetrics,
-  mockWeightData,
-  mockCalorieData,
-  mockWorkoutVolumeData,
-  mockSleepData,
-  mockBodyZones,
-} from "@/lib/mock-data";
+import { fetchWeightSeries, fetchVolumeSeries } from "@/services/trends/core";
+import { getBodyMapData } from "@/services/muscles";
+import { getDailyNutritionSummary, getUserNutritionGoals, get7DayNutritionHistory } from "@/services/nutrition";
 
 // Lazy load nutrition widget (client component with data fetching)
 const NutritionWidget = dynamic(() => import("@/components/dashboard/NutritionWidget"), {
@@ -66,6 +60,21 @@ interface SystemicRecoveryRow {
   recovery_tier: string;
 }
 
+function tierToZoneStatus(tier: string): "recovered" | "recovering" | "fatigued" {
+  if (tier === "green") return "recovered";
+  if (tier === "yellow") return "recovering";
+  return "fatigued";
+}
+
+const ZONE_MUSCLE_MAP = [
+  { id: "chest",     label: "Chest",     muscle: "chest"      },
+  { id: "shoulders", label: "Shoulders", muscle: "front_delts" },
+  { id: "arms",      label: "Arms",      muscle: "biceps"     },
+  { id: "core",      label: "Core",      muscle: "core"       },
+  { id: "quads",     label: "Quads",     muscle: "quads"      },
+  { id: "calves",    label: "Calves",    muscle: "calves"     },
+] as const;
+
 export default async function DashboardPage() {
   const supabase = await createClient();
   const {
@@ -83,69 +92,145 @@ export default async function DashboardPage() {
 
   if (!profile?.onboarding_complete) redirect("/onboarding");
 
-  // Derive display name from OAuth metadata or email
   const meta = user.user_metadata ?? {};
   const firstName = ((meta.full_name || meta.name || user.email || "there") as string)
     .split(" ")[0];
 
-  // Fetch most recent wearable health snapshot (last 7 days, most recent row)
-  const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
-    .toISOString()
-    .split("T")[0];
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: latestWearable } = await (supabase as any)
-    .from("wearable_health_metrics")
-    .select("metric_date, provider, sleep_duration, sleep_quality, hrv, resting_heart_rate, daily_steps, active_calories")
-    .eq("user_id", user.id)
-    .gte("metric_date", sevenDaysAgo)
-    .order("metric_date", { ascending: false })
-    .limit(1)
-    .maybeSingle() as { data: WearableMetricRow | null };
+  // Date range constants
+  const thirtyDaysAgo  = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
+  const fourteenDaysAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
+  const sevenDaysAgo   = new Date(Date.now() -  7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
+  const today          = new Date().toISOString().split("T")[0];
 
-  // Fetch readiness score from systemic_recovery (computed by recovery engine)
+  // All data fetched in parallel to minimise page load time
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: systemicRecovery } = await (supabase as any)
-    .from("systemic_recovery")
-    .select("readiness_score, recovery_tier")
-    .eq("user_id", user.id)
-    .order("updated_at", { ascending: false })
-    .limit(1)
-    .maybeSingle() as { data: SystemicRecoveryRow | null };
+  const [
+    wearableResult,
+    systemicResult,
+    sleepResult,
+    weightSeries,
+    volumeSeries,
+    bodyMapData,
+    todayNutritionSummary,
+    nutritionGoals,
+    weekNutritionHistory,
+    todaySessionResult,
+  ] = await Promise.all([
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (supabase as any)
+      .from("wearable_health_metrics")
+      .select("metric_date, provider, sleep_duration, sleep_quality, hrv, resting_heart_rate, daily_steps, active_calories")
+      .eq("user_id", user.id)
+      .gte("metric_date", sevenDaysAgo)
+      .order("metric_date", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (supabase as any)
+      .from("systemic_recovery")
+      .select("readiness_score, recovery_tier")
+      .eq("user_id", user.id)
+      .order("updated_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (supabase as any)
+      .from("wearable_health_metrics")
+      .select("metric_date, sleep_duration")
+      .eq("user_id", user.id)
+      .not("sleep_duration", "is", null)
+      .gte("metric_date", fourteenDaysAgo)
+      .order("metric_date", { ascending: true }),
+    fetchWeightSeries(user.id, thirtyDaysAgo, today),
+    fetchVolumeSeries(user.id, thirtyDaysAgo, today),
+    getBodyMapData(user.id),
+    getDailyNutritionSummary(user.id, today),
+    getUserNutritionGoals(user.id),
+    get7DayNutritionHistory(user.id),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (supabase as any)
+      .from("workout_sessions")
+      .select("session_name")
+      .eq("user_id", user.id)
+      .eq("session_date", today)
+      .maybeSingle(),
+  ]);
 
-  // Fetch last 14 days of sleep from wearables for the chart
-  const fourteenDaysAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000)
-    .toISOString()
-    .split("T")[0];
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: sleepRows } = await (supabase as any)
-    .from("wearable_health_metrics")
-    .select("metric_date, sleep_duration")
-    .eq("user_id", user.id)
-    .not("sleep_duration", "is", null)
-    .gte("metric_date", fourteenDaysAgo)
-    .order("metric_date", { ascending: true }) as { data: Array<{ metric_date: string; sleep_duration: number }> | null };
+  const latestWearable = (wearableResult as { data: WearableMetricRow | null }).data;
+  const systemicRecovery = (systemicResult as { data: SystemicRecoveryRow | null }).data;
+  const sleepRows = (sleepResult as { data: Array<{ metric_date: string; sleep_duration: number }> | null }).data;
+  const todaySession = (todaySessionResult as { data: { session_name: string } | null }).data;
 
-  // Format sleep chart data — real wearable data when available, else fall back to mock
-  const sleepChartData = sleepRows && sleepRows.length > 0
-    ? sleepRows.map((r) => ({
-        date: new Date(r.metric_date + "T00:00:00").toLocaleDateString("en-US", {
-          month: "short",
-          day: "numeric",
-        }),
-        hours: r.sleep_duration,
-      }))
-    : mockSleepData;
-  const hasRealSleepData = sleepRows && sleepRows.length > 0;
+  // ── Chart data: real or empty (no mock fallbacks) ─────────────────────────────
+
+  const sleepChartData = (sleepRows ?? []).map((r) => ({
+    date: new Date(r.metric_date + "T00:00:00").toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+    }),
+    hours: r.sleep_duration,
+  }));
+  const hasRealSleepData = sleepChartData.length > 0;
+
+  const weightChartData = weightSeries.map((p) => ({
+    date: new Date(p.date + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+    value: p.value,
+  }));
+
+  const volumeChartData = volumeSeries.map((p) => ({
+    date: new Date(p.date + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+    volume: p.value,
+  }));
+
+  const calorieChartData = weekNutritionHistory.map((s) => ({
+    date: new Date(s.date + "T00:00:00").toLocaleDateString("en-US", { weekday: "short" }),
+    consumed: s.calories,
+    goal: nutritionGoals?.calorie_target ?? 0,
+  }));
+
+  // ── Body zones: real recovery scores from muscle_states (null when missing) ──
+
+  const hasBodyMapData = Object.keys(bodyMapData).length > 0;
+  const bodyZones = ZONE_MUSCLE_MAP.map((z) => {
+    const m = bodyMapData[z.muscle];
+    return {
+      id:     z.id,
+      label:  z.label,
+      score:  m ? Math.round(m.recovery_score) : null,
+      status: m ? tierToZoneStatus(m.tier) : null,
+    };
+  });
+
+  // ── MetricsOverview: real data only (no mock fallbacks) ──────────────────────
+
+  const caloriesConsumed = todayNutritionSummary?.calories ?? 0;
+  const calorieTarget    = nutritionGoals?.calorie_target  ?? 0;
+  const proteinConsumed  = Math.round(todayNutritionSummary?.protein_g ?? 0);
+  const proteinGoal      = nutritionGoals?.protein_target ?? 0;
+  const dashboardMetrics = {
+    calories: {
+      consumed:  caloriesConsumed,
+      total:     calorieTarget,
+      remaining: Math.max(0, calorieTarget - caloriesConsumed),
+    },
+    protein: {
+      consumed: proteinConsumed,
+      goal:     proteinGoal,
+      unit:     "g",
+    },
+    workoutStatus: todaySession?.session_name ?? "Rest Day",
+    hasNutritionGoals: !!nutritionGoals,
+  };
 
   const wearableSnapshot: WearableSnapshot | null = latestWearable
     ? {
-        sleep_duration: latestWearable.sleep_duration,
-        sleep_quality: latestWearable.sleep_quality,
-        hrv: latestWearable.hrv,
+        sleep_duration:    latestWearable.sleep_duration,
+        sleep_quality:     latestWearable.sleep_quality,
+        hrv:               latestWearable.hrv,
         resting_heart_rate: latestWearable.resting_heart_rate,
-        daily_steps: latestWearable.daily_steps,
-        active_calories: latestWearable.active_calories,
-        provider: latestWearable.provider,
+        daily_steps:       latestWearable.daily_steps,
+        active_calories:   latestWearable.active_calories,
+        provider:          latestWearable.provider,
       }
     : null;
 
@@ -162,7 +247,6 @@ export default async function DashboardPage() {
             </div>
             <div className="flex items-center gap-2 flex-wrap">
               <p className="text-sm text-muted-foreground">{getFormattedDate()}</p>
-              <StatusChip label="All systems optimal" variant="success" />
             </div>
           </div>
           <ThemeToggle />
@@ -172,7 +256,7 @@ export default async function DashboardPage() {
       {/* Hero Metrics */}
       <SectionContainer title="Today's Overview">
         <MetricsOverview
-          metrics={mockMetrics}
+          metrics={dashboardMetrics}
           wearableSnapshot={wearableSnapshot}
           readinessScore={systemicRecovery?.readiness_score ?? null}
         />
@@ -186,11 +270,15 @@ export default async function DashboardPage() {
       {/* Charts Grid */}
       <SectionContainer title="Trends">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <SectionCard title="Weight Trend" subtitle="Last 30 days" padding={false}>
+          <SectionCard
+            title="Weight Trend"
+            subtitle={weightSeries.length > 0 ? "Last 30 days · live" : "Last 30 days"}
+            padding={false}
+          >
             <div className="px-5 pb-5 pt-1">
               <ChartPlaceholder
                 type="area"
-                data={mockWeightData}
+                data={weightChartData}
                 dataKey="value"
                 color="primary"
                 height={130}
@@ -199,11 +287,15 @@ export default async function DashboardPage() {
             </div>
           </SectionCard>
 
-          <SectionCard title="Calorie Intake" subtitle="This week" padding={false}>
+          <SectionCard
+            title="Calorie Intake"
+            subtitle={weekNutritionHistory.length > 0 ? "This week · live" : "This week"}
+            padding={false}
+          >
             <div className="px-5 pb-5 pt-1">
               <ChartPlaceholder
                 type="bar"
-                data={mockCalorieData}
+                data={calorieChartData}
                 dataKey="consumed"
                 color="warning"
                 height={130}
@@ -212,11 +304,15 @@ export default async function DashboardPage() {
             </div>
           </SectionCard>
 
-          <SectionCard title="Training Volume" subtitle="Last 30 days" padding={false}>
+          <SectionCard
+            title="Training Volume"
+            subtitle={volumeSeries.length > 0 ? "Last 30 days · live" : "Last 30 days"}
+            padding={false}
+          >
             <div className="px-5 pb-5 pt-1">
               <ChartPlaceholder
                 type="area"
-                data={mockWorkoutVolumeData}
+                data={volumeChartData}
                 dataKey="volume"
                 color="success"
                 height={130}
@@ -258,7 +354,11 @@ export default async function DashboardPage() {
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         {/* Body Recovery Map */}
         <SectionCard title="Body Recovery Map" subtitle="Full analysis in Recovery tab">
-          {(() => {
+          {!hasBodyMapData ? (
+            <div className="flex items-center justify-center min-h-[200px] text-sm text-muted-foreground text-center px-4">
+              Log a workout to start tracking muscle recovery.
+            </div>
+          ) : (() => {
             const zoneColorMap = {
               recovered:  { fill: "rgba(34,197,94,0.15)",  stroke: "rgba(34,197,94,0.65)",  bar: "#22C55E" },
               recovering: { fill: "rgba(245,158,11,0.15)", stroke: "rgba(245,158,11,0.65)", bar: "#F59E0B" },
@@ -293,6 +393,8 @@ export default async function DashboardPage() {
                 </>
               ),
             };
+            const hasAnyStatus = bodyZones.some((z) => z.status);
+            void hasAnyStatus; // referenced for clarity; legend is always shown
             return (
               <div className="flex flex-col gap-4 py-1">
                 <div className="flex items-start gap-5">
@@ -303,8 +405,8 @@ export default async function DashboardPage() {
                       <circle cx="50" cy="11" r="10" fill="var(--foreground)" fillOpacity="0.1" stroke="var(--foreground)" strokeOpacity="0.25" strokeWidth="0.8" />
                       <rect x="45" y="20" width="10" height="8" rx="4" fill="var(--foreground)" fillOpacity="0.1" />
                       {/* Colored zones */}
-                      {mockBodyZones.map((zone) => {
-                        const c = zoneColorMap[zone.status];
+                      {bodyZones.map((zone) => {
+                        const c = zone.status ? zoneColorMap[zone.status] : { fill: "var(--muted)", stroke: "var(--border)" };
                         return (
                           <g key={zone.id} fill={c.fill} stroke={c.stroke} strokeWidth="0.9">
                             {zoneShapes[zone.id]}
@@ -316,18 +418,18 @@ export default async function DashboardPage() {
 
                   {/* Score list */}
                   <div className="flex-1 flex flex-col gap-2.5 pt-1">
-                    {mockBodyZones.map((zone) => {
-                      const c = zoneColorMap[zone.status];
+                    {bodyZones.map((zone) => {
+                      const c = zone.status ? zoneColorMap[zone.status] : { bar: "var(--muted-foreground)" };
                       return (
                         <div key={zone.id} className="flex items-center gap-2">
                           <span className="text-xs text-foreground/80 w-[68px] shrink-0">{zone.label}</span>
                           <div className="flex-1 h-1.5 rounded-full bg-muted overflow-hidden">
                             <div
                               className="h-full rounded-full"
-                              style={{ width: `${zone.score}%`, backgroundColor: c.bar, transition: "width 0.6s ease" }}
+                              style={{ width: `${zone.score ?? 0}%`, backgroundColor: c.bar, transition: "width 0.6s ease" }}
                             />
                           </div>
-                          <span className="text-xs font-semibold text-foreground w-6 text-right">{zone.score}</span>
+                          <span className="text-xs font-semibold text-foreground w-6 text-right">{zone.score ?? "—"}</span>
                         </div>
                       );
                     })}

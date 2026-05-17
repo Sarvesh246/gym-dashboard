@@ -21,6 +21,7 @@ interface ChartPlaceholderProps {
   className?: string;
   showXAxis?: boolean;
   showYAxis?: boolean;
+  emptyLabel?: string;
 }
 
 // Map CSS var names to fallback hex for recharts (which can't read CSS vars directly)
@@ -56,9 +57,24 @@ export function ChartPlaceholder({
   className,
   showXAxis = false,
   showYAxis = false,
+  emptyLabel = "No data yet",
 }: ChartPlaceholderProps) {
   const strokeColor = COLOR_MAP[color] ?? color;
   const fillColor = strokeColor;
+
+  if (!data || data.length === 0) {
+    return (
+      <div
+        className={cn(
+          "w-full flex items-center justify-center rounded-lg border border-dashed border-border bg-muted/20 text-xs text-muted-foreground",
+          className
+        )}
+        style={{ height }}
+      >
+        {emptyLabel}
+      </div>
+    );
+  }
 
   const commonProps = {
     data,

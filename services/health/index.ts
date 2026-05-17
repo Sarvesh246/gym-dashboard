@@ -7,6 +7,7 @@
 import { createServerClient } from "@supabase/ssr";
 import type { Database } from "@/lib/supabase/types";
 
+
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 export interface DailyHealthMetrics {
@@ -132,9 +133,16 @@ export async function getDailyHealthMetrics(
       .eq("date", date)
       .single();
 
-    if (error && error.code !== "PGRST116") {
-      // PGRST116 = no rows found (expected)
-      console.error("[getDailyHealthMetrics] Error:", error.message);
+    if (error) {
+      // PGRST116 = no rows found (expected). Missing-table errors mean
+      // migration 006 hasn't been applied — degrade silently in that case.
+      const missing =
+        error.code === "PGRST205" ||
+        error.code === "42P01" ||
+        /Could not find the table .* in the schema cache/i.test(error.message || "");
+      if (error.code !== "PGRST116" && !missing) {
+        console.error("[getDailyHealthMetrics] Error:", error.message);
+      }
       return null;
     }
 

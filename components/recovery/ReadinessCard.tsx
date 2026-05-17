@@ -7,9 +7,9 @@ import { Zap, Moon, Activity, Brain } from "lucide-react";
 
 interface ReadinessCardProps {
   readiness: ReadinessOutput;
-  sleepScore: number;
-  hrvScore: number;
-  restingHR: number;
+  sleepScore: number | null;
+  hrvScore: number | null;
+  restingHR: number | null;
 }
 
 const TIER_CHIP_VARIANT: Record<RecoveryTier, "success" | "warning" | "danger" | "accent"> = {
@@ -73,9 +73,9 @@ export function ReadinessCard({ readiness, sleepScore, hrvScore, restingHR }: Re
           </p>
 
           <div className="grid grid-cols-3 gap-3 mt-4">
-            <Stat icon={<Moon size={14} />} label="Sleep" value={`${sleepScore}%`} />
-            <Stat icon={<Activity size={14} />} label="HRV" value={`${hrvScore}ms`} />
-            <Stat icon={<Zap size={14} />} label="Resting HR" value={`${restingHR}`} />
+            <Stat icon={<Moon size={14} />}     label="Sleep"      value={sleepScore == null ? "—" : `${Math.round(sleepScore)}%`} />
+            <Stat icon={<Activity size={14} />} label="HRV"        value={hrvScore == null   ? "—" : `${Math.round(hrvScore)}ms`} />
+            <Stat icon={<Zap size={14} />}      label="Resting HR" value={restingHR == null  ? "—" : `${Math.round(restingHR)}`} />
           </div>
         </div>
       </div>

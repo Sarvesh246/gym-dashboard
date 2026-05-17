@@ -136,7 +136,7 @@ export default function BarcodeScanner({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 bg-black/70 z-[60] flex items-center justify-center p-4">
       <div className="bg-card rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl">
         {/* Header */}
         <div className="bg-success px-4 py-4 flex items-center justify-between text-white">
@@ -222,19 +222,28 @@ export default function BarcodeScanner({
               <input
                 type="text"
                 value={manualBarcode}
-                onChange={(e) => setManualBarcode(e.target.value)}
+                onChange={(e) => setManualBarcode(e.target.value.replace(/\D/g, ""))}
                 onKeyDown={(e) => e.key === "Enter" && handleManualSubmit()}
                 placeholder="e.g. 5901234123457"
                 inputMode="numeric"
+                pattern="[0-9]*"
+                maxLength={14}
                 className="flex-1 px-3 py-2 border border-input bg-background text-foreground placeholder:text-muted-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-ring text-sm"
               />
               <button
                 onClick={handleManualSubmit}
-                disabled={!manualBarcode.trim()}
+                disabled={manualBarcode.trim().length < 6}
                 className="px-4 py-2 bg-success hover:bg-success/90 disabled:opacity-50 text-white font-medium rounded-lg transition-colors text-sm"
               >
                 Search
               </button>
+            </div>
+            <div className="rounded-lg bg-muted/40 border border-border p-2.5 text-[11px] leading-relaxed text-muted-foreground">
+              <p className="font-medium text-foreground mb-0.5">Where to find the barcode</p>
+              <p>
+                Look for the black-and-white striped rectangle on the package — usually on the
+                back or bottom. Type the 8–13 digit number printed below the stripes (no spaces).
+              </p>
             </div>
           </div>
         </div>

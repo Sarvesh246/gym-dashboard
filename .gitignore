@@ -43,3 +43,6 @@ next-env.d.ts
 # agents and codex
 .agents/
 .codex/
+
+# local Claude instructions (contains credentials, do not commit)
+CLAUDE.local.md
