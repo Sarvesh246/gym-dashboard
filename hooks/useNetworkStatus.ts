@@ -9,10 +9,10 @@ export interface NetworkStatus {
 }
 
 export function useNetworkStatus(): NetworkStatus {
-  const [status, setStatus] = useState<NetworkStatus>(() => ({
-    online: typeof navigator !== "undefined" ? navigator.onLine : true,
-    quality: typeof navigator !== "undefined" ? getNetworkQuality() : "online",
-  }));
+  // Safe initial state: assume online. Both SSR and client hydration
+  // use this value so they always match, preventing React error #418.
+  // The real network state is read in useEffect (client-only, post-hydration).
+  const [status, setStatus] = useState<NetworkStatus>({ online: true, quality: "online" });
 
   const update = useCallback(() => {
     setStatus({
@@ -22,6 +22,9 @@ export function useNetworkStatus(): NetworkStatus {
   }, []);
 
   useEffect(() => {
+    // Sync real state immediately after hydration
+    update();
+
     window.addEventListener("online", update);
     window.addEventListener("offline", update);
 
