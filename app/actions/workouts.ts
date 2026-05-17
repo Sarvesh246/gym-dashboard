@@ -205,16 +205,18 @@ export async function syncWgerExercises(): Promise<{ success: boolean; count?: n
 
     console.log(`[syncWgerExercises] Fetched ${exercises.length} exercises, upserting...`);
 
-    const rows = exercises.map((e) => ({
-      wger_id:              e.id,
-      name:                 e.name,
-      description:          e.description || null,
-      equipment_ids:        e.equipment || [],
-      muscle_ids:           e.muscles || [],
-      secondary_muscle_ids: e.muscles_secondary || [],
-      images:               e.images || [],
-      synced_at:            new Date().toISOString(),
-    }));
+    const rows = exercises
+      .filter((e) => e.name && e.name.trim() !== "")
+      .map((e) => ({
+        wger_id:              e.id,
+        name:                 e.name,
+        description:          e.description || null,
+        equipment_ids:        e.equipment || [],
+        muscle_ids:           e.muscles || [],
+        secondary_muscle_ids: e.muscles_secondary || [],
+        images:               e.images || [],
+        synced_at:            new Date().toISOString(),
+      }));
 
     // Upsert in batches (Supabase has limits)
     const batchSize = 100;
