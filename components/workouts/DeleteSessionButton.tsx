@@ -4,7 +4,13 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Trash2 } from "lucide-react";
 
-export function DeleteSessionButton({ sessionId }: { sessionId: string }) {
+export function DeleteSessionButton({
+  sessionId,
+  redirectAfter,
+}: {
+  sessionId: string;
+  redirectAfter?: string;
+}) {
   const router = useRouter();
   const [pending, setPending] = useState(false);
   const [confirming, setConfirming] = useState(false);
@@ -17,7 +23,11 @@ export function DeleteSessionButton({ sessionId }: { sessionId: string }) {
     setPending(true);
     try {
       await fetch(`/api/workouts/session/${sessionId}`, { method: "DELETE" });
-      router.refresh();
+      if (redirectAfter) {
+        router.push(redirectAfter);
+      } else {
+        router.refresh();
+      }
     } finally {
       setPending(false);
       setConfirming(false);

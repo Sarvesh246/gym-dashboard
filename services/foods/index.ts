@@ -3,9 +3,10 @@
 import { createClient } from "@/lib/supabase/server";
 import { USDAFood, SavedFood, SaveFoodInput } from "@/lib/nutrition/types";
 
-// USDA FoodData Central API base URL (free tier)
-const USDA_API_URL = "https://fdc.nal.usda.gov/api/foods/search";
-const USDA_API_KEY = "DEMO_KEY"; // Free tier; consider using env var for production
+// USDA FoodData Central API base URLs
+const USDA_SEARCH_URL = "https://api.nal.usda.gov/fdc/v1/foods/search";
+const USDA_FOOD_URL   = "https://api.nal.usda.gov/fdc/v1/food";
+const USDA_API_KEY    = process.env.USDA_API_KEY ?? "DEMO_KEY";
 
 // In-memory cache for USDA results (24h TTL)
 const usda_cache: Map<string, { data: USDAFood[]; timestamp: number }> = new Map();
@@ -24,13 +25,14 @@ export async function searchFoods(query: string, limit: number = 20): Promise<{ 
     }
 
     // Call USDA API
-    const url = new URL(USDA_API_URL);
+    const url = new URL(USDA_SEARCH_URL);
     url.searchParams.set("query", query);
     url.searchParams.set("pageSize", Math.min(limit, 50).toString());
     url.searchParams.set("api_key", USDA_API_KEY);
 
     const response = await fetch(url.toString());
     if (!response.ok) {
+      console.error(`[searchFoods] USDA API ${response.status}:`, await response.text().catch(() => ""));
       return { foods: [] };
     }
 
@@ -75,7 +77,7 @@ export async function searchFoods(query: string, limit: number = 20): Promise<{ 
  */
 export async function getFoodDetails(fdcId: string): Promise<USDAFood | null> {
   try {
-    const url = new URL(`${USDA_API_URL}/${fdcId}`);
+    const url = new URL(`${USDA_FOOD_URL}/${fdcId}`);
     url.searchParams.set("api_key", USDA_API_KEY);
 
     const response = await fetch(url.toString());

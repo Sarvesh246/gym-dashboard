@@ -11,7 +11,7 @@ import {
   getWeeklyWorkoutCount,
 } from "@/services/workouts";
 import { getSystemicRecovery } from "@/services/recovery";
-import { Dumbbell, Plus, Clock, TrendingUp, Flame, BookOpen, ChevronRight } from "lucide-react";
+import { Dumbbell, Plus, Clock, TrendingUp, Flame, BookOpen, ChevronRight, PenLine } from "lucide-react";
 import Link from "next/link";
 
 function formatDate(iso: string): string {
@@ -57,13 +57,22 @@ export default async function WorkoutsPage() {
             <h1 className="text-2xl font-bold text-foreground tracking-tight">Workouts</h1>
             <p className="text-sm text-muted-foreground mt-0.5">Plan and track your training</p>
           </div>
-          <Link
-            href="/workouts/exercises"
-            className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <BookOpen size={14} />
-            Exercise Library
-          </Link>
+          <div className="flex items-center gap-3">
+            <Link
+              href="/workouts/log"
+              className="flex items-center gap-1.5 text-xs text-primary font-medium hover:text-primary/80 transition-colors"
+            >
+              <PenLine size={14} />
+              Log Workout
+            </Link>
+            <Link
+              href="/workouts/exercises"
+              className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <BookOpen size={14} />
+              Exercise Library
+            </Link>
+          </div>
         </div>
       </SectionContainer>
 
@@ -136,8 +145,9 @@ export default async function WorkoutsPage() {
           ) : (
             <div className="space-y-2">
               {recentWorkouts.map((lw) => (
-                <div
+                <Link
                   key={lw.id}
+                  href={`/workouts/history/${lw.id}`}
                   className="flex items-center gap-3 rounded-xl p-3 bg-muted/50 hover:bg-muted transition-colors"
                 >
                   <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
@@ -161,15 +171,8 @@ export default async function WorkoutsPage() {
                       )}
                     </div>
                   </div>
-                  {lw.workout_id && (
-                    <Link
-                      href={`/workouts/session/${lw.workout_id}`}
-                      className="text-xs text-muted-foreground hover:text-foreground"
-                    >
-                      <ChevronRight size={14} />
-                    </Link>
-                  )}
-                </div>
+                  <ChevronRight size={14} className="text-muted-foreground shrink-0" />
+                </Link>
               ))}
             </div>
           )}
