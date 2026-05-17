@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ThemeProvider } from "next-themes";
 import { AppShell } from "@/components/layout/AppShell";
+import { PwaBootstrap } from "@/components/layout/PwaBootstrap";
 import { UnitSystemProvider } from "@/lib/unit-system-context";
 import { SITE_URL } from "@/lib/site";
 import "./globals.css";
@@ -66,6 +67,7 @@ export default function RootLayout({
           disableTransitionOnChange={false}
         >
           <UnitSystemProvider>
+            <PwaBootstrap />
             <AppShell>{children}</AppShell>
           </UnitSystemProvider>
         </ThemeProvider>

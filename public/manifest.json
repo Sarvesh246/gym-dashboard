@@ -3,23 +3,53 @@
   "short_name": "Myostat",
   "description": "Your premium fitness operating system",
   "display": "standalone",
-  "orientation": "portrait",
+  "display_override": ["standalone", "minimal-ui"],
+  "orientation": "portrait-primary",
   "background_color": "#050505",
   "theme_color": "#3B82F6",
-  "start_url": "/",
+  "start_url": "/?source=pwa",
   "scope": "/",
+  "lang": "en",
+  "categories": ["health", "fitness", "lifestyle"],
   "icons": [
     {
       "src": "/icons/icon.svg",
       "sizes": "any",
       "type": "image/svg+xml",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
     },
     {
       "src": "/logo.svg",
       "sizes": "any",
       "type": "image/svg+xml",
-      "purpose": "monochrome any"
+      "purpose": "monochrome"
+    }
+  ],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Log Workout",
+      "short_name": "Workout",
+      "url": "/workouts",
+      "description": "Start or log a workout session"
+    },
+    {
+      "name": "Log Nutrition",
+      "short_name": "Nutrition",
+      "url": "/nutrition",
+      "description": "Log your meals and macros"
+    },
+    {
+      "name": "Recovery",
+      "short_name": "Recovery",
+      "url": "/recovery",
+      "description": "Check your recovery status"
     }
   ]
 }

@@ -4,6 +4,8 @@ import { usePathname } from "next/navigation";
 import { AnimatePresence, motion, type Variants } from "framer-motion";
 import { MobileNav } from "./MobileNav";
 import { DesktopNav } from "./DesktopNav";
+import { OfflineBanner } from "@/components/offline/OfflineBanner";
+import { InstallPromptBanner } from "@/components/offline/InstallPromptBanner";
 import { ReactNode } from "react";
 
 const pageVariants: Variants = {
@@ -35,6 +37,7 @@ export function AppShell({ children }: AppShellProps) {
 
   return (
     <div className="min-h-screen bg-background">
+      <OfflineBanner />
       <DesktopNav />
 
       {/* Main content — offset for desktop sidebar, padded for mobile nav */}
@@ -53,6 +56,7 @@ export function AppShell({ children }: AppShellProps) {
       </main>
 
       <MobileNav />
+      <InstallPromptBanner />
     </div>
   );
 }
