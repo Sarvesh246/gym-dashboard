@@ -35,6 +35,13 @@ const WEARABLE_UI_ROWS: {
   { provider: "wahoo", label: "Wahoo" },
 ];
 
+function zeroRecordsMessage(provider: WearableProvider): string {
+  if (provider === "fitbit" || provider === "google_fit") {
+    return "Sync finished but no Fitbit data was found for this Google account. Confirm a Fitbit device is linked at fitbit.com and has synced recently, then try Sync again. If you connected before today, tap Connect and sign in again.";
+  }
+  return "Sync finished but no new data was found. Make sure your device has synced recently to its companion app, then try Sync again. If you connected before today, tap Connect and sign in again.";
+}
+
 function resolveRowStatus(
   row: (typeof WEARABLE_UI_ROWS)[number],
   statuses: ProviderStatus[]
@@ -176,10 +183,7 @@ export function WearablesSection() {
 
       if (data.status === "completed" || data.status === "partial") {
         if (data.records_processed === 0) {
-          setError(
-            data.error ||
-              "Sync finished but no Fitbit data was found for this Google account. Confirm a Fitbit device is linked at fitbit.com and has synced recently, then try Sync again. If you connected before today, tap Connect and sign in again."
-          );
+          setError(data.error || zeroRecordsMessage(provider));
         } else {
           setSyncNotice(
             `Synced ${data.records_processed} day${data.records_processed === 1 ? "" : "s"} of data.`
