@@ -4,6 +4,7 @@ import { handleFitbitCallback } from "@/services/sync/fitbit-sync";
 import { handleGarminCallback } from "@/services/sync/garmin-sync";
 import { handlePolarCallback } from "@/services/sync/polar-sync";
 import { handleWahooCallback } from "@/services/sync/wahoo-sync";
+import { handleGoogleFitCallback } from "@/services/sync/google-fit-sync";
 import type { WearableProvider } from "@/lib/wearables/providers";
 import { SITE_URL } from "@/lib/site";
 
@@ -22,6 +23,7 @@ const CALLBACK_HANDLERS: Record<
   fitbit: handleFitbitCallback,
   polar: handlePolarCallback,
   wahoo: handleWahooCallback,
+  google_fit: handleGoogleFitCallback,
 };
 
 function redirectToSettings(

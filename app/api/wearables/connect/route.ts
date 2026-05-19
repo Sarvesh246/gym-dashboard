@@ -16,6 +16,10 @@ import {
 import {
   generateWahooAuthUrl,
 } from "@/services/wearables/wahoo";
+import {
+  generateGoogleFitAuthUrl,
+} from "@/services/wearables/google-fit";
+import { handleGoogleFitCallback } from "@/services/sync/google-fit-sync";
 import { handleGarminCallback } from "@/services/sync/garmin-sync";
 import { handleFitbitCallback } from "@/services/sync/fitbit-sync";
 import { handleAppleHealthCallback } from "@/services/sync/apple-sync";
@@ -28,6 +32,7 @@ const SUPPORTED_PROVIDERS: WearableProvider[] = [
   "fitbit",
   "polar",
   "wahoo",
+  "google_fit",
 ];
 
 export async function POST(request: NextRequest) {
@@ -146,6 +151,22 @@ export async function POST(request: NextRequest) {
               );
             }
           }
+          case "google_fit": {
+            try {
+              const authUrl = generateGoogleFitAuthUrl(state);
+              return NextResponse.json({ authUrl });
+            } catch (err) {
+              return NextResponse.json(
+                {
+                  error:
+                    err instanceof Error
+                      ? err.message
+                      : "Google Fit OAuth not configured on server",
+                },
+                { status: 500 }
+              );
+            }
+          }
         }
       } catch (err) {
         const message =
@@ -217,6 +238,16 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({
               success: true,
               message: "Wahoo successfully connected",
+            });
+          }
+          case "google_fit": {
+            const success = await handleGoogleFitCallback(user.id, code);
+            if (!success) {
+              throw new Error("Failed to establish Google Fit connection");
+            }
+            return NextResponse.json({
+              success: true,
+              message: "Google Fit successfully connected",
             });
           }
         }

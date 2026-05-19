@@ -2,7 +2,7 @@
  * Wearable provider registry and metadata
  */
 
-export type WearableProvider = "garmin" | "apple_health" | "fitbit" | "polar" | "wahoo";
+export type WearableProvider = "garmin" | "apple_health" | "fitbit" | "polar" | "wahoo" | "google_fit";
 
 export interface ProviderMetadata {
   name: string;
@@ -101,6 +101,24 @@ export const PROVIDER_REGISTRY: Record<WearableProvider, ProviderMetadata> = {
       "activity_level",
     ],
     authFlow: "oauth2",
+  },
+  google_fit: {
+    name: "Google Fit",
+    description: "Google Fit (syncs Apple Health on iOS via HealthKit)",
+    implemented: true,
+    supportedMetrics: [
+      "sleep_duration",
+      "sleep_quality",
+      "resting_heart_rate",
+      "daily_steps",
+      "active_calories",
+      "activity_level",
+    ],
+    authFlow: "oauth2",
+    rateLimit: {
+      requestsPerHour: 100,
+      requestsPerDay: 2000,
+    },
   },
 };
 

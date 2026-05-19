@@ -5,6 +5,7 @@ import { syncFitbitData, triggerManualFitbitSync } from "@/services/sync/fitbit-
 import { syncAppleHealthData, triggerManualAppleHealthSync } from "@/services/sync/apple-sync";
 import { syncPolarData, triggerManualPolarSync } from "@/services/sync/polar-sync";
 import { syncWahooData, triggerManualWahooSync } from "@/services/sync/wahoo-sync";
+import { syncGoogleFitData, triggerManualGoogleFitSync } from "@/services/sync/google-fit-sync";
 import { isProviderImplemented } from "@/lib/wearables/providers";
 
 export async function POST(request: NextRequest) {
@@ -53,6 +54,9 @@ export async function POST(request: NextRequest) {
         break;
       case "wahoo":
         syncResult = await triggerManualWahooSync(user.id);
+        break;
+      case "google_fit":
+        syncResult = await triggerManualGoogleFitSync(user.id);
         break;
       default:
         return NextResponse.json(
