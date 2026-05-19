@@ -25,15 +25,22 @@ const WEARABLE_UI_ROWS: {
   { provider: "garmin", label: "Garmin Connect" },
   {
     provider: "fitbit",
-    label: "Google Fit",
+    label: "Fitbit (via Google Health)",
     aliasProviders: ["google_fit"],
     note:
-      "For iPhone: Garmin → Apple Health → Google Fit app. Connect with the same Google account you use in the Google Fit app, then tap Sync.",
+      "Requires a Fitbit device linked to your Google account. Wear the device and sync the Fitbit app on your phone first, then connect here with the same Google account.",
   },
   { provider: "apple_health", label: "Apple Health" },
   { provider: "polar", label: "Polar" },
   { provider: "wahoo", label: "Wahoo" },
 ];
+
+function zeroRecordsMessage(provider: WearableProvider): string {
+  if (provider === "fitbit" || provider === "google_fit") {
+    return "Sync finished but no Fitbit data was found for this Google account. Confirm a Fitbit device is linked at fitbit.com and has synced recently, then try Sync again. If you connected before today, tap Connect and sign in again.";
+  }
+  return "Sync finished but no new data was found. Make sure your device has synced recently to its companion app, then try Sync again. If you connected before today, tap Connect and sign in again.";
+}
 
 function resolveRowStatus(
   row: (typeof WEARABLE_UI_ROWS)[number],
@@ -176,10 +183,7 @@ export function WearablesSection() {
 
       if (data.status === "completed" || data.status === "partial") {
         if (data.records_processed === 0) {
-          setError(
-            data.error ||
-              "Sync finished but no health data was found. Open the Google Fit app on your phone and confirm your steps/sleep appear there, then try Sync again. If you connected before today, tap Connect and sign in again."
-          );
+          setError(data.error || zeroRecordsMessage(provider));
         } else {
           setSyncNotice(
             `Synced ${data.records_processed} day${data.records_processed === 1 ? "" : "s"} of data.`
