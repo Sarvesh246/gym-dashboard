@@ -31,6 +31,8 @@ export function normalizeHealthData(
       return normalizePolarData(providerData);
     case "wahoo":
       return normalizeWahooData(providerData);
+    case "google_fit":
+      return normalizeGoogleFitData(providerData);
     default:
       return {};
   }
@@ -117,6 +119,23 @@ function normalizeWahooData(data: Record<string, unknown>): NormalizedHealthMetr
   return {
     daily_steps: typeof data.steps === "number" ? data.steps : undefined,
     active_calories: typeof data.calories === "number" ? data.calories : undefined,
+  };
+}
+
+/**
+ * Normalize Google Fit payload
+ * Google Fit provides aggregated metrics: activity (steps, calories), sleep (duration, segments), heart rate (avg, min, max)
+ */
+function normalizeGoogleFitData(data: Record<string, unknown>): NormalizedHealthMetrics {
+  const sleepData = data.sleep_duration_ms;
+  const heartRateData = data.heart_rate as Record<string, unknown> | undefined;
+
+  return {
+    sleep_duration: typeof sleepData === "number" ? sleepData / 3600000 : undefined, // ms → hours
+    resting_heart_rate: typeof heartRateData?.average_bpm === "number" ? heartRateData.average_bpm : undefined,
+    daily_steps: typeof data.steps === "number" ? data.steps : undefined,
+    active_calories: typeof data.calories === "number" ? data.calories : undefined,
+    activity_level: typeof data.active_minutes === "number" ? data.active_minutes : undefined,
   };
 }
 
