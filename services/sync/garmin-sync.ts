@@ -149,11 +149,6 @@ export async function syncGarminData(
     // Get fresh access token
     const accessToken = await getFreshGarminToken(userId);
     if (!accessToken) {
-      // Token refresh failed → mark connection as expired so we stop
-      // retrying every sync window. User must reconnect to recover.
-      await upsertWearableConnection(userId, "garmin", {
-        connection_status: "expired",
-      });
       await completeSyncLog(syncLog.id, "failed", 0, "No valid access token");
       return {
         provider: "garmin",

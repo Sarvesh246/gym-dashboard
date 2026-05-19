@@ -152,9 +152,6 @@ export async function syncFitbitData(
     // Get fresh access token
     const accessToken = await getFreshFitbitToken(userId);
     if (!accessToken) {
-      await upsertWearableConnection(userId, "fitbit", {
-        connection_status: "expired",
-      });
       await completeSyncLog(syncLog.id, "failed", 0, "No valid access token");
       return {
         provider: "fitbit",
