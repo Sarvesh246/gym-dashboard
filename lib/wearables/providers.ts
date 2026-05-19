@@ -62,8 +62,8 @@ export const PROVIDER_REGISTRY: Record<WearableProvider, ProviderMetadata> = {
     authFlow: "oauth2",
   },
   fitbit: {
-    name: "Fitbit",
-    description: "Fitbit data via Google Health API",
+    name: "Google Fit",
+    description: "Google Fit / Google Health (Garmin → Apple Health → Google Fit on iPhone)",
     implemented: true,
     supportedMetrics: [
       "sleep_duration",
@@ -104,7 +104,7 @@ export const PROVIDER_REGISTRY: Record<WearableProvider, ProviderMetadata> = {
   },
   google_fit: {
     name: "Google Fit",
-    description: "Google Fit (syncs Apple Health on iOS via HealthKit)",
+    description: "Google Fit via Google Health API (legacy provider id; use fitbit row in Settings)",
     implemented: true,
     supportedMetrics: [
       "sleep_duration",

@@ -1,15 +1,15 @@
 /**
- * Google Fit-specific sync orchestration
- * Coordinates full Google Fit sync workflow: auth, fetch, normalize, store
+ * Google Fit sync — uses Google Health API (health.googleapis.com).
+ * On iPhone, Garmin → Apple Health → Google Fit app; this API reads the Google account cloud copy.
  */
 
 import {
-  exchangeGoogleFitCode,
-  refreshGoogleFitToken,
-  fetchGoogleFitActivity,
-  fetchGoogleFitSleep,
-  fetchGoogleFitHeartRate,
-} from "@/services/wearables/google-fit";
+  exchangeFitbitCode,
+  refreshFitbitToken,
+  fetchFitbitSleep,
+  fetchFitbitActivity,
+  fetchFitbitHeartRate,
+} from "@/services/wearables/fitbit";
 import {
   getWearableConnection,
   upsertWearableConnection,
@@ -25,17 +25,16 @@ import { normalizeHealthData } from "@/services/wearables/normalizer";
 import type { SyncResult } from "@/lib/health/types";
 
 /**
- * Handle Google Fit OAuth callback
- * Store tokens and establish connection
+ * Handle Google Fit OAuth callback (Google Health API scopes)
  */
 export async function handleGoogleFitCallback(
   userId: string,
   code: string
 ): Promise<boolean> {
   try {
-    const tokenData = await exchangeGoogleFitCode(code);
+    const tokenData = await exchangeFitbitCode(code);
     if (!tokenData) {
-      console.error("Failed to exchange Google Fit code");
+      console.error("Failed to exchange Google Fit / Google Health code");
       return false;
     }
 
@@ -70,31 +69,31 @@ export async function getFreshGoogleFitToken(userId: string): Promise<string | n
       return null;
     }
 
-    // Check if token is expired
     if (connection.token_expiry) {
       const expiry = new Date(connection.token_expiry);
-      const buffer = 5 * 60 * 1000; // 5 min buffer
+      const buffer = 5 * 60 * 1000;
 
       if (expiry.getTime() - Date.now() < buffer) {
-        // Token is about to expire, refresh it
         if (!connection.refresh_token) {
           console.error("No refresh token available");
           return null;
         }
 
-        const newToken = await refreshGoogleFitToken(connection.refresh_token);
+        const newToken = await refreshFitbitToken(connection.refresh_token);
         if (!newToken) {
           console.error("Failed to refresh Google Fit token");
           return null;
         }
 
-        // Update stored token
         const newExpiry = new Date();
         newExpiry.setSeconds(newExpiry.getSeconds() + newToken.expires_in);
 
         await upsertWearableConnection(userId, "google_fit", {
           access_token: newToken.access_token,
           token_expiry: newExpiry.toISOString(),
+          ...(newToken.refresh_token
+            ? { refresh_token: newToken.refresh_token }
+            : {}),
         });
 
         return newToken.access_token;
@@ -109,8 +108,7 @@ export async function getFreshGoogleFitToken(userId: string): Promise<string | n
 }
 
 /**
- * Perform a full Google Fit sync
- * Fetches 7 days of data by default
+ * Perform a full Google Fit sync (7 days by default)
  */
 export async function syncGoogleFitData(
   userId: string,
@@ -131,7 +129,6 @@ export async function syncGoogleFitData(
   }
 
   try {
-    // Manual "sync now" must bypass throttle — see garmin-sync.ts for context.
     if (!options.force) {
       const shouldSync = await shouldTriggerSync(userId, "google_fit");
       if (!shouldSync) {
@@ -146,58 +143,62 @@ export async function syncGoogleFitData(
       }
     }
 
-    // Get fresh access token
     const accessToken = await getFreshGoogleFitToken(userId);
     if (!accessToken) {
-      await completeSyncLog(syncLog.id, "failed", 0, "No valid access token");
+      await completeSyncLog(
+        syncLog.id,
+        "failed",
+        0,
+        "No valid access token — disconnect and reconnect Google Fit in Settings"
+      );
       return {
         provider: "google_fit",
         user_id: userId,
         started_at: syncLog.sync_started_at,
         status: "failed",
         records_processed: 0,
-        error: "No valid access token",
+        error: "No valid access token — reconnect Google Fit in Settings",
       };
     }
 
     let recordsProcessed = 0;
     let partialFailure = false;
 
-    // Fetch data for each day
     for (let i = 0; i <= daysBack; i++) {
       const currentDate = new Date();
       currentDate.setDate(currentDate.getDate() - i);
       const dateStr = currentDate.toISOString().split("T")[0];
 
-      // Check if already synced
-      const exists = await metricsExistForDate(userId, "google_fit", dateStr);
-      if (exists) {
-        continue;
+      if (!options.force) {
+        const exists = await metricsExistForDate(userId, "google_fit", dateStr);
+        if (exists) {
+          continue;
+        }
       }
 
       try {
-        // Fetch all data for the day in parallel
-        const [activityData, sleepData, heartRateData] = await Promise.all([
-          fetchGoogleFitActivity(accessToken, dateStr),
-          fetchGoogleFitSleep(accessToken, dateStr),
-          fetchGoogleFitHeartRate(accessToken, dateStr),
+        const [sleepData, activityData, heartRateData] = await Promise.all([
+          fetchFitbitSleep(accessToken, dateStr),
+          fetchFitbitActivity(accessToken, dateStr),
+          fetchFitbitHeartRate(accessToken, dateStr),
         ]);
 
-        // Aggregate data for the day
         const aggregated: Record<string, unknown> = {
-          ...activityData,
           ...sleepData,
+          ...activityData,
           ...heartRateData,
         };
 
-        // Normalize and store
         const normalized = normalizeHealthData(aggregated, "google_fit");
-        const stored = await storeHealthMetrics(userId, "google_fit", dateStr, normalized);
+        const stored = await storeHealthMetrics(
+          userId,
+          "google_fit",
+          dateStr,
+          normalized
+        );
 
         if (stored) {
           recordsProcessed++;
-        } else {
-          partialFailure = true;
         }
       } catch (err) {
         console.error(`Error syncing Google Fit data for ${dateStr}:`, err);
@@ -205,15 +206,24 @@ export async function syncGoogleFitData(
       }
     }
 
-    // Update connection's last_synced_at
     await upsertWearableConnection(userId, "google_fit", {
       last_synced_at: new Date().toISOString(),
       connection_status: "connected",
     });
 
-    // Complete sync log
-    const status = partialFailure ? "partial" : "completed";
-    await completeSyncLog(syncLog.id, status, recordsProcessed);
+    const status =
+      recordsProcessed === 0 && partialFailure
+        ? "failed"
+        : partialFailure
+          ? "partial"
+          : "completed";
+
+    const errorMessage =
+      recordsProcessed === 0
+        ? "No health data returned from Google. On iPhone, confirm the Google Fit app shows your Garmin/Apple Health data, then disconnect and reconnect here using the same Google account."
+        : undefined;
+
+    await completeSyncLog(syncLog.id, status, recordsProcessed, errorMessage);
 
     return {
       provider: "google_fit",
@@ -222,6 +232,7 @@ export async function syncGoogleFitData(
       completed_at: new Date().toISOString(),
       status,
       records_processed: recordsProcessed,
+      error: errorMessage,
     };
   } catch (err) {
     console.error("Google Fit sync error:", err);

@@ -25,6 +25,7 @@ import { handleFitbitCallback } from "@/services/sync/fitbit-sync";
 import { handleAppleHealthCallback } from "@/services/sync/apple-sync";
 import { handlePolarCallback } from "@/services/sync/polar-sync";
 import { handleWahooCallback } from "@/services/sync/wahoo-sync";
+import { disconnectWearable } from "@/services/wearables";
 
 const SUPPORTED_PROVIDERS: WearableProvider[] = [
   "garmin",
@@ -258,6 +259,20 @@ export async function POST(request: NextRequest) {
           { status: 500 }
         );
       }
+    }
+
+    if (action === "disconnect") {
+      const success = await disconnectWearable(user.id, typedProvider);
+      if (!success) {
+        return NextResponse.json(
+          { error: "Failed to disconnect provider" },
+          { status: 500 }
+        );
+      }
+      return NextResponse.json({
+        success: true,
+        message: `${provider} disconnected`,
+      });
     }
 
     return NextResponse.json(

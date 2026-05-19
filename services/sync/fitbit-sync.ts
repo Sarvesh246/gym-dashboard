@@ -177,10 +177,11 @@ export async function syncFitbitData(
       currentDate.setDate(currentDate.getDate() - i);
       const dateStr = currentDate.toISOString().split("T")[0];
 
-      // Check if already synced
-      const exists = await metricsExistForDate(userId, "fitbit", dateStr);
-      if (exists) {
-        continue;
+      if (!options.force) {
+        const exists = await metricsExistForDate(userId, "fitbit", dateStr);
+        if (exists) {
+          continue;
+        }
       }
 
       try {
@@ -220,8 +221,19 @@ export async function syncFitbitData(
     });
 
     // Complete sync log
-    const status = partialFailure ? "partial" : "completed";
-    await completeSyncLog(syncLog.id, status, recordsProcessed);
+    const status =
+      recordsProcessed === 0 && partialFailure
+        ? "failed"
+        : partialFailure
+          ? "partial"
+          : "completed";
+
+    const errorMessage =
+      recordsProcessed === 0
+        ? "No health data returned from Google. On iPhone, confirm the Google Fit app shows your Garmin/Apple Health data, then disconnect and reconnect using the same Google account."
+        : undefined;
+
+    await completeSyncLog(syncLog.id, status, recordsProcessed, errorMessage);
 
     return {
       provider: "fitbit",
@@ -230,6 +242,7 @@ export async function syncFitbitData(
       completed_at: new Date().toISOString(),
       status,
       records_processed: recordsProcessed,
+      error: errorMessage,
     };
   } catch (err) {
     console.error("Fitbit sync error:", err);

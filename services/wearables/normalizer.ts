@@ -127,12 +127,27 @@ function normalizeWahooData(data: Record<string, unknown>): NormalizedHealthMetr
  * Google Fit provides aggregated metrics: activity (steps, calories), sleep (duration, segments), heart rate (avg, min, max)
  */
 function normalizeGoogleFitData(data: Record<string, unknown>): NormalizedHealthMetrics {
+  // Google Health API (shared with fitbit provider)
+  const sleep = data.sleep as Record<string, unknown> | undefined;
+  const heartRate = data.heartRate as Record<string, unknown> | undefined;
+
+  if (sleep || heartRate || data.steps !== undefined) {
+    return normalizeFitbitData(data);
+  }
+
+  // Legacy Google Fitness REST API aggregate payload
   const sleepData = data.sleep_duration_ms;
-  const heartRateData = data.heart_rate as Record<string, unknown> | undefined;
+  const averageBpm =
+    typeof data.average_bpm === "number"
+      ? data.average_bpm
+      : typeof (data.heart_rate as Record<string, unknown> | undefined)?.average_bpm ===
+          "number"
+        ? ((data.heart_rate as Record<string, unknown>).average_bpm as number)
+        : undefined;
 
   return {
     sleep_duration: typeof sleepData === "number" ? sleepData / 3600000 : undefined, // ms → hours
-    resting_heart_rate: typeof heartRateData?.average_bpm === "number" ? heartRateData.average_bpm : undefined,
+    resting_heart_rate: averageBpm,
     daily_steps: typeof data.steps === "number" ? data.steps : undefined,
     active_calories: typeof data.calories === "number" ? data.calories : undefined,
     activity_level: typeof data.active_minutes === "number" ? data.active_minutes : undefined,

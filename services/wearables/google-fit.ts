@@ -1,19 +1,16 @@
 /**
  * Google Fit integration
- * Direct access to Google Fit API for activity, sleep, and health metrics
- * Works with web-app-on-iOS via browser OAuth flow
+ * OAuth + sync use Google Health API (see fitbit.ts). Legacy Fitness REST helpers remain for reference.
  */
 
-const GOOGLE_OAUTH_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth";
+export {
+  generateFitbitAuthUrl as generateGoogleFitAuthUrl,
+  exchangeFitbitCode as exchangeGoogleFitCode,
+  refreshFitbitToken as refreshGoogleFitToken,
+} from "@/services/wearables/fitbit";
+
 const GOOGLE_OAUTH_TOKEN_URL = "https://oauth2.googleapis.com/token";
 const GOOGLE_FIT_API_BASE = "https://www.googleapis.com/fitness/v1";
-
-const GOOGLE_FIT_SCOPES = [
-  "https://www.googleapis.com/auth/fitness.activity.read",
-  "https://www.googleapis.com/auth/fitness.sleep.read",
-  "https://www.googleapis.com/auth/fitness.heart_rate.read",
-  "https://www.googleapis.com/auth/fitness.body.read",
-].join(" ");
 
 export interface GoogleFitConfig {
   clientId: string;
@@ -34,7 +31,7 @@ function readRequiredEnv(
 }
 
 /**
- * Get Google OAuth config from GOOGLE_FIT_* environment variables
+ * Legacy Fitness REST config (GOOGLE_FIT_*). Prefer FITBIT_* / Google Health for new connections.
  */
 export function getGoogleFitConfig(): GoogleFitConfig {
   return {
@@ -44,121 +41,15 @@ export function getGoogleFitConfig(): GoogleFitConfig {
   };
 }
 
+/** Google Fit aggregate API expects epoch milliseconds (not nanoseconds). */
 function dateToMs(dateStr: string): number {
-  return new Date(`${dateStr}T00:00:00Z`).getTime() * 1_000_000;
+  return new Date(`${dateStr}T00:00:00Z`).getTime();
 }
 
 function dateToNextMs(dateStr: string): number {
   const d = new Date(`${dateStr}T00:00:00Z`);
   d.setUTCDate(d.getUTCDate() + 1);
-  return d.getTime() * 1_000_000;
-}
-
-/**
- * Generate Google OAuth authorization URL for Google Fit access
- */
-export function generateGoogleFitAuthUrl(state: string): string {
-  const config = getGoogleFitConfig();
-
-  const params = new URLSearchParams({
-    client_id: config.clientId,
-    response_type: "code",
-    redirect_uri: config.redirectUri,
-    scope: GOOGLE_FIT_SCOPES,
-    state,
-    access_type: "offline",
-    prompt: "consent",
-    include_granted_scopes: "true",
-  });
-
-  return `${GOOGLE_OAUTH_AUTH_URL}?${params.toString()}`;
-}
-
-/**
- * Exchange authorization code for Google OAuth tokens
- */
-export async function exchangeGoogleFitCode(code: string): Promise<{
-  access_token: string;
-  refresh_token: string;
-  expires_in: number;
-} | null> {
-  try {
-    const config = getGoogleFitConfig();
-
-    const response = await fetch(GOOGLE_OAUTH_TOKEN_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: new URLSearchParams({
-        grant_type: "authorization_code",
-        code,
-        client_id: config.clientId,
-        client_secret: config.clientSecret,
-        redirect_uri: config.redirectUri,
-      }).toString(),
-    });
-
-    if (!response.ok) {
-      console.error("Google OAuth token exchange failed:", await response.text());
-      return null;
-    }
-
-    const data = await response.json();
-    if (!data.access_token || !data.refresh_token) {
-      console.error("Google OAuth response missing tokens");
-      return null;
-    }
-
-    return {
-      access_token: data.access_token,
-      refresh_token: data.refresh_token,
-      expires_in: data.expires_in ?? 3600,
-    };
-  } catch (err) {
-    console.error("Error exchanging Google OAuth code:", err);
-    return null;
-  }
-}
-
-/**
- * Refresh Google OAuth access token
- */
-export async function refreshGoogleFitToken(refreshToken: string): Promise<{
-  access_token: string;
-  expires_in: number;
-} | null> {
-  try {
-    const config = getGoogleFitConfig();
-
-    const response = await fetch(GOOGLE_OAUTH_TOKEN_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: new URLSearchParams({
-        grant_type: "refresh_token",
-        refresh_token: refreshToken,
-        client_id: config.clientId,
-        client_secret: config.clientSecret,
-      }).toString(),
-    });
-
-    if (!response.ok) {
-      console.error("Google Fit token refresh failed:", await response.text());
-      return null;
-    }
-
-    const data = await response.json();
-    if (!data.access_token) {
-      console.error("Google Fit refresh response missing access token");
-      return null;
-    }
-
-    return {
-      access_token: data.access_token,
-      expires_in: data.expires_in ?? 3600,
-    };
-  } catch (err) {
-    console.error("Error refreshing Google Fit token:", err);
-    return null;
-  }
+  return d.getTime();
 }
 
 /**
