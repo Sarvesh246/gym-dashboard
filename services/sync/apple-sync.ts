@@ -114,7 +114,8 @@ export async function getFreshAppleHealthToken(userId: string): Promise<string |
  */
 export async function syncAppleHealthData(
   userId: string,
-  daysBack: number = 7
+  daysBack: number = 7,
+  options: { force?: boolean } = {}
 ): Promise<SyncResult> {
   const syncLog = await createSyncLog(userId, "apple_health");
 
@@ -130,17 +131,21 @@ export async function syncAppleHealthData(
   }
 
   try {
-    // Check if sync should be triggered
-    const shouldSync = await shouldTriggerSync(userId, "apple_health");
-    if (!shouldSync) {
-      await completeSyncLog(syncLog.id, "completed", 0);
-      return {
-        provider: "apple_health",
-        user_id: userId,
-        started_at: syncLog.sync_started_at,
-        status: "completed",
-        records_processed: 0,
-      };
+    // Manual "sync now" must bypass the 6h throttle — otherwise the user
+    // clicks Sync, sees "completed" + 0 records, and thinks the system is
+    // broken. Scheduled / background syncs keep the throttle.
+    if (!options.force) {
+      const shouldSync = await shouldTriggerSync(userId, "apple_health");
+      if (!shouldSync) {
+        await completeSyncLog(syncLog.id, "completed", 0);
+        return {
+          provider: "apple_health",
+          user_id: userId,
+          started_at: syncLog.sync_started_at,
+          status: "completed",
+          records_processed: 0,
+        };
+      }
     }
 
     // Get fresh access token
@@ -247,5 +252,5 @@ export async function triggerManualAppleHealthSync(userId: string): Promise<Sync
     };
   }
 
-  return syncAppleHealthData(userId, 7);
+  return syncAppleHealthData(userId, 7, { force: true });
 }

@@ -117,7 +117,8 @@ export async function getFreshFitbitToken(userId: string): Promise<string | null
  */
 export async function syncFitbitData(
   userId: string,
-  daysBack: number = 7
+  daysBack: number = 7,
+  options: { force?: boolean } = {}
 ): Promise<SyncResult> {
   const syncLog = await createSyncLog(userId, "fitbit");
 
@@ -133,22 +134,27 @@ export async function syncFitbitData(
   }
 
   try {
-    // Check if sync should be triggered
-    const shouldSync = await shouldTriggerSync(userId, "fitbit");
-    if (!shouldSync) {
-      await completeSyncLog(syncLog.id, "completed", 0);
-      return {
-        provider: "fitbit",
-        user_id: userId,
-        started_at: syncLog.sync_started_at,
-        status: "completed",
-        records_processed: 0,
-      };
+    // Manual "sync now" must bypass throttle — see garmin-sync.ts for context.
+    if (!options.force) {
+      const shouldSync = await shouldTriggerSync(userId, "fitbit");
+      if (!shouldSync) {
+        await completeSyncLog(syncLog.id, "completed", 0);
+        return {
+          provider: "fitbit",
+          user_id: userId,
+          started_at: syncLog.sync_started_at,
+          status: "completed",
+          records_processed: 0,
+        };
+      }
     }
 
     // Get fresh access token
     const accessToken = await getFreshFitbitToken(userId);
     if (!accessToken) {
+      await upsertWearableConnection(userId, "fitbit", {
+        connection_status: "expired",
+      });
       await completeSyncLog(syncLog.id, "failed", 0, "No valid access token");
       return {
         provider: "fitbit",
@@ -264,5 +270,5 @@ export async function triggerManualFitbitSync(userId: string): Promise<SyncResul
     };
   }
 
-  return syncFitbitData(userId, 7);
+  return syncFitbitData(userId, 7, { force: true });
 }

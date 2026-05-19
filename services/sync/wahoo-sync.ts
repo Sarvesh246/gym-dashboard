@@ -113,7 +113,8 @@ export async function getFreshWahooToken(userId: string): Promise<string | null>
  */
 export async function syncWahooData(
   userId: string,
-  daysBack: number = 7
+  daysBack: number = 7,
+  options: { force?: boolean } = {}
 ): Promise<SyncResult> {
   const syncLog = await createSyncLog(userId, "wahoo");
 
@@ -129,17 +130,21 @@ export async function syncWahooData(
   }
 
   try {
-    // Check if sync should be triggered
-    const shouldSync = await shouldTriggerSync(userId, "wahoo");
-    if (!shouldSync) {
-      await completeSyncLog(syncLog.id, "completed", 0);
-      return {
-        provider: "wahoo",
-        user_id: userId,
-        started_at: syncLog.sync_started_at,
-        status: "completed",
-        records_processed: 0,
-      };
+    // Manual "sync now" must bypass the 6h throttle — otherwise the user
+    // clicks Sync, sees "completed" + 0 records, and thinks the system is
+    // broken. Scheduled / background syncs keep the throttle.
+    if (!options.force) {
+      const shouldSync = await shouldTriggerSync(userId, "wahoo");
+      if (!shouldSync) {
+        await completeSyncLog(syncLog.id, "completed", 0);
+        return {
+          provider: "wahoo",
+          user_id: userId,
+          started_at: syncLog.sync_started_at,
+          status: "completed",
+          records_processed: 0,
+        };
+      }
     }
 
     // Get fresh access token
@@ -255,5 +260,5 @@ export async function triggerManualWahooSync(userId: string): Promise<SyncResult
     };
   }
 
-  return syncWahooData(userId, 7);
+  return syncWahooData(userId, 7, { force: true });
 }
