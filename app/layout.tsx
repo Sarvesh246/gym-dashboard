@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ThemeProvider } from "next-themes";
+import { Analytics } from "@vercel/analytics/next";
 import { AppShell } from "@/components/layout/AppShell";
 import { PwaBootstrap } from "@/components/layout/PwaBootstrap";
 import { UnitSystemProvider } from "@/lib/unit-system-context";
@@ -71,6 +72,7 @@ export default function RootLayout({
             <AppShell>{children}</AppShell>
           </UnitSystemProvider>
         </ThemeProvider>
+        <Analytics />
       </body>
     </html>
   );
